@@ -8,12 +8,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt" // Use the updated JWT package
-
-	_ "github.com/gklps/wallet-frontend/backend/docs"
-
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/swaggo/gin-swagger" // Swagger UI package
+	_ "github.com/gklps/wallet-frontend/docs" // Local Swagger docs import
+	"github.com/golang-jwt/jwt"
+	_ "github.com/mattn/go-sqlite3" // SQLite driver
+	"github.com/swaggo/gin-swagger" // Swagger UI handler
 	// Swagger files
 )
 

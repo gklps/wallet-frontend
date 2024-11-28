@@ -1,6 +1,10 @@
 module github.com/gklps/wallet-frontend
 
-go 1.20
+go 1.22.0
+
+toolchain go1.23.3
+
+replace github.com/gklps/wallet-frontend/docs => ./docs
 
 require (
 	github.com/gin-gonic/gin v1.10.0
