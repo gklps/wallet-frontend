@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/gklps/wallet-frontend/docs" // Local Swagger docs import
 	"github.com/golang-jwt/jwt"
@@ -24,6 +27,7 @@ type User struct {
 	ID    int    `json:"id"`
 	Email string `json:"email"`
 	Name  string `json:"name"`
+	DID   string `json:"did"`
 }
 
 // LoginCredentials represents the request body structure for login
@@ -58,12 +62,20 @@ func main() {
 	}
 
 	// Create users table if not exists
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, email TEXT, password TEXT, name TEXT)`)
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    email TEXT,
+    password TEXT,
+    name TEXT,
+    did TEXT
+	)`)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	r := gin.Default()
+	r.Use(cors.Default())
 	r.POST("/login", loginHandler)
 	r.POST("/create", createUserHandler)
 	r.GET("/profile", authenticate, profileHandler)
@@ -90,11 +102,11 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	// Retrieve the hashed password from the database for the user
-	var storedHashedPassword string
+	// Retrieve the hashed password and DID from the database for the user
+	var storedHashedPassword, did string
 	var user User
-	row := db.QueryRow("SELECT id, email, name, password FROM users WHERE email = ?", creds.Email)
-	err := row.Scan(&user.ID, &user.Email, &user.Name, &storedHashedPassword)
+	row := db.QueryRow("SELECT id, email, name, password, did FROM users WHERE email = ?", creds.Email)
+	err := row.Scan(&user.ID, &user.Email, &user.Name, &storedHashedPassword, &did)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
@@ -108,9 +120,9 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	// Generate JWT token
+	// Generate JWT token using DID as the "sub" claim
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
+		"sub": did, // Using DID instead of user ID
 		"exp": time.Now().Add(time.Hour * 72).Unix(),
 	})
 
@@ -148,18 +160,37 @@ func createUserHandler(c *gin.Context) {
 		return
 	}
 
-	// Insert new user into the database
-	_, err = db.Exec("INSERT INTO users (email, password, name) VALUES (?, ?, ?)", newUser.Email, string(hashedPassword), newUser.Name)
+	// Call the /create_wallet API to get the DID
+	var didResponse struct {
+		DID string `json:"did"`
+	}
+
+	// Create the wallet and fetch the DID
+	walletRequest := `{"port": "20000"}`
+	resp, err := http.Post("http://localhost:8081/create_wallet", "application/json", bytes.NewBuffer([]byte(walletRequest)))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create wallet"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if err := json.NewDecoder(resp.Body).Decode(&didResponse); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not decode wallet response"})
+		return
+	}
+
+	// Insert new user into the database with DID
+	_, err = db.Exec("INSERT INTO users (email, password, name, did) VALUES (?, ?, ?, ?)", newUser.Email, string(hashedPassword), newUser.Name, didResponse.DID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user"})
 		return
 	}
 
-	// Return a response with the created user's data
+	// Return a response with the created user's data including the DID
 	c.JSON(http.StatusCreated, gin.H{
-		"id":    1, // Ideally, you would fetch the inserted user ID from the database
 		"email": newUser.Email,
 		"name":  newUser.Name,
+		"did":   didResponse.DID,
 	})
 }
 
@@ -195,11 +226,25 @@ func authenticate(c *gin.Context) {
 		return
 	}
 
+	// Now we can access the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did := claims["sub"].(string)
+
+	// Optionally, you can check the DID in the database
+	var user User
+	row := db.QueryRow("SELECT id, email, name, did FROM users WHERE did = ?", did)
+	err = row.Scan(&user.ID, &user.Email, &user.Name, &user.DID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid DID"})
+		c.Abort()
+		return
+	}
+
 	c.Next()
 }
 
 // Profile handler to return user profile information
-// @Summary Get user profile by ID
+// @Summary Get user profile by DID
 // @Description Fetch user information from the database using the JWT token
 // @Tags User
 // @Accept json
@@ -209,16 +254,22 @@ func authenticate(c *gin.Context) {
 // @Security BearerAuth
 // @Router /profile [get]
 func profileHandler(c *gin.Context) {
-	// Extract user ID from token claims
-	tokenString := c.GetHeader("Authorization")[7:]
+	// Extract the DID from the token
+	tokenString := c.GetHeader("Authorization")[7:] // Strip "Bearer "
 	token, _ := jwt.Parse(tokenString, nil)
 	claims := token.Claims.(jwt.MapClaims)
-	userID := claims["sub"].(float64)
 
-	// Fetch user info from database
+	// Use string assertion for DID, since it's a string
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Fetch user info from database using DID
 	var user User
-	row := db.QueryRow("SELECT id, email, name FROM users WHERE id = ?", userID)
-	err := row.Scan(&user.ID, &user.Email, &user.Name)
+	row := db.QueryRow("SELECT id, email, name, did FROM users WHERE did = ?", did)
+	err := row.Scan(&user.ID, &user.Email, &user.Name, &user.DID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch user"})
 		return

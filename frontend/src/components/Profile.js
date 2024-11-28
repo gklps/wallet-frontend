@@ -1,58 +1,73 @@
-import React, { useEffect, useState } from "react";
-import { Container, Button, Alert } from "react-bootstrap";
-import { useAuth } from "../context/AuthContext";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { Container, Button } from 'react-bootstrap';
+import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 const Profile = () => {
-  const { user, token } = useAuth(); // Get user and token from context
+  const { token, logout } = useAuth(); // Get user data from AuthContext
   const [profileData, setProfileData] = useState(null);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [error, setError] = useState(null); // For error handling
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (token) {
-      // Fetch profile data with Authorization header
-      axios
-        .get("http://localhost:8080/profile", {
-          headers: {
-            Authorization: `Bearer ${token}` // Pass the token in the Authorization header
-          }
-        })
+      console.log('User token:', token); // Log the token to check
+      console.log('User is logged in, fetching profile data...');
+      // Make an authenticated request to fetch the profile
+      axios.get('http://localhost:8080/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`, // Send token in Authorization header
+        },
+      })
         .then((response) => {
-          setProfileData(response.data); // Store the profile data in state
+          setProfileData(response.data); // Set profile data
+          setLoading(false); // Stop loading once data is fetched
         })
-        .catch((error) => {
-          // Handle errors, for example invalid token
-          if (error.response && error.response.data.error) {
-            setError(error.response.data.error);
-            // Optionally redirect to login if token is invalid
-            if (error.response.data.error === "Invalid token") {
-              navigate("/login");
-            }
+        .catch((err) => {
+          // Enhanced error logging for debugging
+          console.error('Failed to fetch profile:', err);
+          if (err.response) {
+            // If there is a response error from the backend
+            console.error('Response error:', err.response.data);
+            setError(`Error: ${err.response.data.error || 'Unknown error'}`);
+          } else if (err.request) {
+            // If the request was made but no response was received
+            console.error('Request error:', err.request);
+            setError('Network error: No response from server.');
           } else {
-            setError("An error occurred. Please try again later.");
+            // If something else went wrong
+            console.error('General error:', err.message);
+            setError('An unexpected error occurred.');
           }
+          setLoading(false);
         });
+    } else {
+      setError('You are not logged in.');
+      setLoading(false);
     }
-  }, [token, navigate]); // Re-fetch profile data when token changes
+  }, [token]); // Re-run when the `user` object changes
 
-  if (!user || !profileData) {
-    return <div>Loading...</div>; // Show loading state
+  if (loading) {
+    return <div>Loading...</div>; // Show loading message until data is fetched
+  }
+
+  if (error) {
+    return <div>{error}</div>; // Show error message if any
   }
 
   return (
     <Container className="mt-5">
       <h2>Profile</h2>
-
-      {error && <Alert variant="danger">{error}</Alert>} {/* Show error message if any */}
-
-      <p><strong>Email:</strong> {profileData.email}</p>
-      <p><strong>Name:</strong> {profileData.name}</p>
-
-      <Button variant="outline-danger" onClick={() => alert("Feature coming soon!")}>
-        Edit
-      </Button>
+      {profileData ? (
+        <>
+          <p><strong>Email:</strong> {profileData.email}</p>
+          <p><strong>Name:</strong> {profileData.name}</p>
+          <p><strong>DID:</strong> {profileData.DID}</p>
+          <Button variant="outline-danger" onClick={logout}>Logout</Button>
+        </>
+      ) : (
+        <div>No profile data available</div>
+      )}
     </Container>
   );
 };
