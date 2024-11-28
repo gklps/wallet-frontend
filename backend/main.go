@@ -10,9 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/gklps/wallet-frontend/docs" // Local Swagger docs import
 	"github.com/golang-jwt/jwt"
-	_ "github.com/mattn/go-sqlite3" // SQLite driver
-	"github.com/swaggo/gin-swagger" // Swagger UI handler
-	// Swagger files
+	_ "github.com/mattn/go-sqlite3"            // SQLite driver
+	swaggerFiles "github.com/swaggo/files"     // Swagger files
+	ginSwagger "github.com/swaggo/gin-swagger" // Swagger UI handler
+	"golang.org/x/crypto/bcrypt"               // bcrypt for hashing passwords
 )
 
 var db *sql.DB
@@ -41,6 +42,13 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+// CreateUserRequest represents the structure for creating a new user
+type CreateUserRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
+}
+
 func main() {
 	var err error
 	// Initialize SQLite3 database
@@ -57,6 +65,7 @@ func main() {
 
 	r := gin.Default()
 	r.POST("/login", loginHandler)
+	r.POST("/create", createUserHandler)
 	r.GET("/profile", authenticate, profileHandler)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -75,22 +84,26 @@ func main() {
 // @Failure 401 {object} ErrorResponse
 // @Router /login [post]
 func loginHandler(c *gin.Context) {
-	var creds struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
+	var creds LoginCredentials
 	if err := c.BindJSON(&creds); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	// Check if the user exists in the database
+	// Retrieve the hashed password from the database for the user
+	var storedHashedPassword string
 	var user User
-	row := db.QueryRow("SELECT id, email, name FROM users WHERE email = ? AND password = ?", creds.Email, creds.Password)
-	err := row.Scan(&user.ID, &user.Email, &user.Name)
-
+	row := db.QueryRow("SELECT id, email, name, password FROM users WHERE email = ?", creds.Email)
+	err := row.Scan(&user.ID, &user.Email, &user.Name, &storedHashedPassword)
 	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	// Compare the entered password with the stored hashed password
+	err = bcrypt.CompareHashAndPassword([]byte(storedHashedPassword), []byte(creds.Password))
+	if err != nil {
+		// If the password does not match, return an Unauthorized error
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
@@ -108,6 +121,46 @@ func loginHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": tokenString})
+}
+
+// CreateUser handler to create a new user and return the user profile
+// @Summary Create a new user
+// @Description Register a new user and store the details in the database
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param user body CreateUserRequest true "New user data"
+// @Success 201 {object} User
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /create [post]
+func createUserHandler(c *gin.Context) {
+	var newUser CreateUserRequest
+	if err := c.BindJSON(&newUser); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	// Hash the user's password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not hash password"})
+		return
+	}
+
+	// Insert new user into the database
+	_, err = db.Exec("INSERT INTO users (email, password, name) VALUES (?, ?, ?)", newUser.Email, string(hashedPassword), newUser.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user"})
+		return
+	}
+
+	// Return a response with the created user's data
+	c.JSON(http.StatusCreated, gin.H{
+		"id":    1, // Ideally, you would fetch the inserted user ID from the database
+		"email": newUser.Email,
+		"name":  newUser.Name,
+	})
 }
 
 // Middleware to authenticate the user via JWT

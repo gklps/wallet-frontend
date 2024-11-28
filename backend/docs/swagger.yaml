@@ -1,4 +1,13 @@
 definitions:
+  main.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
   main.ErrorResponse:
     properties:
       error:
@@ -28,6 +37,36 @@ definitions:
 info:
   contact: {}
 paths:
+  /create:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user and store the details in the database
+      parameters:
+      - description: New user data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/main.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/main.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Create a new user
+      tags:
+      - User
   /login:
     post:
       consumes:
