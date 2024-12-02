@@ -75,7 +75,14 @@ func main() {
 	}
 
 	r := gin.Default()
-	r.Use(cors.Default())
+	// CORS middleware to allow Authorization header
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Requested-With"},
+		AllowCredentials: true,
+		AllowWildcard:    true,
+	}))
 	r.POST("/login", loginHandler)
 	r.POST("/create", createUserHandler)
 	r.GET("/profile", authenticate, profileHandler)
