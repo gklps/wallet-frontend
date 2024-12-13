@@ -12,6 +12,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/gklps/wallet-frontend/docs" // Local Swagger docs import
+	"github.com/gklps/wallet-frontend/storage"
 	"github.com/golang-jwt/jwt"
 	_ "github.com/mattn/go-sqlite3"            // SQLite driver
 	swaggerFiles "github.com/swaggo/files"     // Swagger files
@@ -56,23 +57,11 @@ type CreateUserRequest struct {
 func main() {
 	var err error
 	// Initialize SQLite3 database
-	db, err = sql.Open("sqlite3", "./users.db")
+	db, err = storage.InitDatabase()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Create users table if not exists
-	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY,
-    email TEXT,
-    password TEXT,
-    name TEXT,
-    did TEXT
-	)`)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Initialize JWT with database and secret
 
 	r := gin.Default()
 	// CORS middleware to allow Authorization header
