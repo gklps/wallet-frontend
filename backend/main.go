@@ -218,9 +218,9 @@ func createUserHandler(c *gin.Context) {
 		return
 	}
 
-	// Call the /create_wallet API to get the DID
-	walletRequest := `{"port": 20000}`
-	resp, err := http.Post("http://localhost:8080/create_wallet", "application/json", bytes.NewBuffer([]byte(walletRequest)))
+	// Create the wallet and fetch the DID
+	walletRequest := `{"port": "20009"}`
+	resp, err := http.Post("http://localhost:8081/create_wallet", "application/json", bytes.NewBuffer([]byte(walletRequest)))
 	if err != nil {
 		log.Printf("Error calling /create_wallet: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create wallet"})
