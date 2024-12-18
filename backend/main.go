@@ -101,6 +101,33 @@ type GenerateTestRBTRequest struct {
 	TokenCount int    `json:"number_of_tokens"`
 }
 
+// create FT request
+type CreateFTRequest struct {
+	DID        string `json:"did"`
+	FTCount    int    `json:"ft_count"`
+	FTName     string `json:"ft_name"`
+	TokenCount int    `json:"token_count"`
+}
+
+// transfer FT request
+type TransferFTReq struct {
+	Receiver   string `json:"receiver"`
+	Sender     string `json:"sender"`
+	FTName     string `json:"ft_name"`
+	FTCount    int    `json:"ft_count"`
+	Comment    string `json:"comment"`
+	QuorumType int    `json:"quorum_type"`
+	Password   string `json:"password"`
+	CreatorDID string `json:"creatorDID"`
+}
+
+// peer details struct
+type DIDPeerMap struct {
+	DID     string `json:"did"`
+	DIDType int    `json:"did_type"`
+	PeerID  string `json:"peer_id"`
+}
+
 func main() {
 	var err error
 	// Initialize SQLite3 database
@@ -129,13 +156,21 @@ func main() {
 	//DID features
 	r.POST("/create_wallet", createWalletHandler)
 	r.POST("/register_did", registerDIDHandler)
+	r.POST("/setup_quorum", setupQuorumHandler)
+	r.POST("/add_peer", addPeerHandler)
 	//RBT features
 	r.GET("/request_balance", requestBalanceHandler)
 	r.POST("/testrbt/create", createTestRBTHandler)
+	r.POST("/rbt/unpledge", unpledgeRBTHandler)
 	//Txn features
 	r.POST("/request_txn", requestTransactionHandler)
 	r.GET("/txn/by_did", getTxnByDIDHandler)
 	r.POST("/sign", signTransactionHandler)
+	//FT features
+	r.POST("/create_ft", createFTHandler)
+	r.POST("/transfer_ft", transferFTHandler)
+	r.GET("/get_all_ft", getAllFTHandler)
+	r.GET("/get_ft_chain", getFTChainHandler)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -219,8 +254,8 @@ func createUserHandler(c *gin.Context) {
 	}
 
 	// Create the wallet and fetch the DID
-	walletRequest := `{"port": "20009"}`
-	resp, err := http.Post("http://localhost:8081/create_wallet", "application/json", bytes.NewBuffer([]byte(walletRequest)))
+	walletRequest := `{"port": 20009}`
+	resp, err := http.Post("http://localhost:8080/create_wallet", "application/json", bytes.NewBuffer([]byte(walletRequest)))
 	if err != nil {
 		log.Printf("Error calling /create_wallet: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create wallet"})
@@ -496,7 +531,168 @@ func registerDIDHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 	// Add a newline to the response body if required
 	c.Writer.Write([]byte("\n"))
+}
 
+// Handler: registerDIDHandler publishes the user's DID in the network
+func setupQuorumHandler(c *gin.Context) {
+	var req ReqToRubixNode
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	user, err := storage.GetUserByDID(req.DID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	resp, err := setupQuorumRequest(req.DID, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// registerDIDRequestsends request to rubix node to publish the did info in the network
+func setupQuorumRequest(did string, rubixNodePort string) (string, error) {
+	data := map[string]interface{}{
+		"did":           did,
+		"priv_password": "mypassword",
+	}
+	bodyJSON, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return "", err
+	}
+
+	url := fmt.Sprintf("http://localhost:%s/api/setup-quorum", rubixNodePort)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyJSON))
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return "", err
+	}
+
+	// Process the data as needed
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+
+	respMsg := response["message"].(string)
+	respStatus := response["status"].(bool)
+
+	if !respStatus {
+		return "", fmt.Errorf("test token generation failed, %s", respMsg)
+	}
+
+	return respMsg, nil
+}
+
+// Handler: registerDIDHandler publishes the user's DID in the network
+func addPeerHandler(c *gin.Context) {
+	var req DIDPeerMap
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	user, err := storage.GetUserByDID(req.DID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	resp, err := addPeerRequest(req, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// addPeerRequest request to rubix node to publish the did info in the network
+func addPeerRequest(data DIDPeerMap, rubixNodePort string) (string, error) {
+	bodyJSON, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return "", err
+	}
+
+	url := fmt.Sprintf("http://localhost:%s/api/add-peer-details", rubixNodePort)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyJSON))
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return "", err
+	}
+
+	// Process the data as needed
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+
+	respMsg := response["message"].(string)
+	respStatus := response["status"].(bool)
+
+	if !respStatus {
+		return "", fmt.Errorf("test token generation failed, %s", respMsg)
+	}
+
+	return respMsg, nil
 }
 
 // Handler: Sign transaction
@@ -953,4 +1149,370 @@ func registerDIDRequest(did string, rubixNodePort string) (string, error) {
 	}
 
 	return respMsg, nil
+}
+
+// Handler: Request to unpledge pledged RBTs
+func unpledgeRBTHandler(c *gin.Context) {
+	var req ReqToRubixNode
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	user, err := storage.GetUserByDID(req.DID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	resp, err := unpledgeRBTRequest(req, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// unpledgeRBTRequest sends request to unpledge pledged RBTs
+func unpledgeRBTRequest(data ReqToRubixNode, rubixNodePort string) (string, error) {
+
+	bodyJSON, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return "", err
+	}
+
+	url := fmt.Sprintf("http://localhost:%s/api/run-unpledge", rubixNodePort)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyJSON))
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return "", err
+	}
+
+	// Process the data as needed
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+
+	respMsg := response["message"].(string)
+	respStatus := response["status"].(bool)
+
+	if !respStatus {
+		return "", fmt.Errorf("test token generation failed, %s", respMsg)
+	}
+
+	return respMsg, nil
+}
+
+// FT Handlers
+// createFTHandler: Request to create FT
+func createFTHandler(c *gin.Context) {
+	var req CreateFTRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(req.DID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := createFTReq(req, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// createFTReq requests the rubix node to create FTs
+func createFTReq(data CreateFTRequest, rubixNodePort string) (string, error) {
+	bodyJSON, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return "", err
+	}
+
+	log.Println("port in str:", rubixNodePort)
+	url := fmt.Sprintf("http://localhost:%s/api/create-ft", rubixNodePort)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyJSON))
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return "", err
+	}
+
+	// Process the data as needed
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+
+	respMsg := response["message"].(string)
+	respStatus := response["status"].(bool)
+
+	if !respStatus {
+		return "", fmt.Errorf("test token generation failed, %s", respMsg)
+	}
+
+	return respMsg, nil
+}
+
+// transferFTHandler: Request to transfer FTs
+func transferFTHandler(c *gin.Context) {
+	var req TransferFTReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(req.Sender)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := transferFTRequest(req, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// transferFTRequest sends request to transfer FTs
+func transferFTRequest(data TransferFTReq, rubixNodePort string) (string, error) {
+
+	bodyJSON, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return "", err
+	}
+
+	url := fmt.Sprintf("http://localhost:%s/api/initiate-ft-transfer", rubixNodePort)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyJSON))
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return "", err
+	}
+
+	// Process the data as needed
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+
+	respMsg := response["message"].(string)
+	respStatus := response["status"].(bool)
+
+	if !respStatus {
+		return "", fmt.Errorf("test token generation failed, %s", respMsg)
+	}
+
+	return respMsg, nil
+}
+
+// getAllFTHandler: Request to provide all FTs' info
+func getAllFTHandler(c *gin.Context) {
+	did := c.Query("did")
+
+	if did == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := getAllFTRequest(did, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// getAllFTRequest sends request to Rubix node to provide all FTs' info
+func getAllFTRequest(did string, rubixNodePort string) (map[string]interface{}, error) {
+
+	url := fmt.Sprintf("http://localhost:%s/api/get-ft-info-by-did?did=%s", rubixNodePort, did)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return nil, err
+	}
+
+	// Parse the response into a map
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+	return response, nil
+}
+
+// getFTChainHandler: Request to fetch FT chain
+func getFTChainHandler(c *gin.Context) {
+	did := c.Query("did")
+
+	if did == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
+		return
+	}
+
+	tokenID := c.Query("tokenID")
+
+	if tokenID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: tokenID"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := getFTChainRequest(tokenID, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// getFTChainRequest sends request to Rubix node to provide FT chain
+func getFTChainRequest(tokenID string, rubixNodePort string) (map[string]interface{}, error) {
+
+	url := fmt.Sprintf("http://localhost:%s/api/get-ft-token-chain?tokenID=%s", rubixNodePort, tokenID)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return nil, err
+	}
+
+	// Parse the response into a map
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+	return response, nil
 }
