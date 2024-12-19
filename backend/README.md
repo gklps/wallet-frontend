@@ -35,7 +35,7 @@ curl -X POST http://localhost:8080/register_did -d '{"did":"<user DID>"}'
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/register_did -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq"}'
+curl -X POST http://localhost:8080/register_did -d '{"did":"bafybmigfq7dnhqdpghluqfirvn5yz76vpvrkutofswih7sidmqmssohvbq"}'
 ```
 **Response:**
 ```
@@ -57,7 +57,7 @@ curl -X POST http://localhost:8080/setup_quorum -d '{"did":"<user DID>"}'
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/setup_quorum -d '{"did":"bafybmihtljjkvayu7iwjxzd4sfufywakdd3zymrgcnw7jnc3p6oltjzofe"}'
+curl -X POST http://localhost:8080/setup_quorum -d '{"did":"bafybmieksq2loys6qpszqju33omatw4prgic6kwnpxkklkl2zeslog4g34"}'
 ```
 **Response:**
 ```
@@ -75,25 +75,24 @@ curl -X POST http://localhost:8080/setup_quorum -d '{"did":"bafybmic6olksvxucqrx
 
 ### Curl request to add peer info 
 ```
-curl -X POST http://localhost:8080/add_peer -d '{"did":"<user DID>", "did_type":<between 0 to 4>, "peer_id":"<peer id of the rubix node>"}'
+curl -X POST http://localhost:8080/add_peer -d '{"self_did":"<user did>", "DID":"<peer did>", "DIDType":<0 to 4>, "PeerID":"<peer ID>"}'
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/add_peer -d '{"did":"bafybmihtljjkvayu7iwjxzd4sfufywakdd3zymrgcnw7jnc3p6oltjzofe", "did_type":4, "peer_id":"12D3KooWAJeD1yhzkbPxZRYuokMkcCtNZzMRZ4Ab9n8asxfU3AZv"}'
+curl -X POST http://localhost:8080/add_peer -d '{"self_did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq", "DID":"bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu", "DIDType":4, "PeerID":"12D3KooWRimkVSDAcwESk7HtKTtYaUmzpVrnfidkNKL5HyWVRpTL"}'
 ```
 **Response:**
 ```
-"Quorum setup done successfully"
+"Peers added successfully"
 ```
-#### sample with invalid request (invalid port)
+#### sample with invalid request (invalid did)
 ```
-curl -X POST http://localhost:8080/add_peer -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2fgh","did_type":4, "peer_id":""}'
+curl -X POST http://localhost:8080/add_peer -d '{"self_did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq", "DID":"bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu", "DIDType":4, "PeerID":""}'
 ```
 **Response:**
 ```
-{"error":"User not found"}
+{"error":"test token generation failed, Invalid Peer ID"}
 ```
-
 
 ### Curl request to generate test RBT
 ```
@@ -102,7 +101,7 @@ curl -X POST http://localhost:8080/testrbt/create -d '{"did":"<rubix node DID>",
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq", "number_of_tokens":1}'
+curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmieksq2loys6qpszqju33omatw4prgic6kwnpxkklkl2zeslog4g34", "number_of_tokens":10}'
 ```
 **Response:**
 ```
@@ -125,7 +124,7 @@ curl -X GET "http://localhost:8080/request_balance?did=<user DID>"
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/request_balance?did=bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq"
+curl -X GET "http://localhost:8080/request_balance?did=bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq"
 ```
 **Response:**
 ```
@@ -192,7 +191,7 @@ curl -X POST http://localhost:8080/request_txn -d '{"did":"<sender DID>","receiv
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/request_txn -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq","receiver":"bafybmiao2fylzuppsr7b7cepm32egd465uhpo3kkwbhnekve6u2bedwb3m", "rbt_amount":1.0}'
+curl -X POST http://localhost:8080/request_txn -d '{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","receiver":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq", "rbt_amount":2.56}'
 ```
 **Response:**
 ```
@@ -234,7 +233,7 @@ curl -X GET "http://localhost:8080/txn/by_did?did=bafybmic6olksvxucqrxfbwqptyshu
 
 ### Curl request to create FT
 ```
-curl -X GET "http://localhost:8080/create_ft -d '{"did":"<rubix node DID>", "ft_count":<number of FTs in int>, "ft_name":"<ft name>", "token_count":<number of RBTs in int>}'
+curl -X POST "http://localhost:8080/create_ft -d '{"did":"<rubix node DID>", "ft_count":<number of FTs in int>, "ft_name":"<ft name>", "token_count":<number of RBTs in int>}'
 
 ```
 #### sample with valid request 
@@ -266,7 +265,7 @@ curl -X POST http://localhost:8080/create_ft -d '{
 
 ### Curl request to transfer FT
 ```
-curl -X GET "http://localhost:8080/transfer_ft -d '{"sender":"<sender DID>", "receiver":<receiver DID>, "ft_count":<number of FTs in int>, "ft_name":"<ft name>", "creatorDID":<DID of FT creator>}'
+curl -X POST "http://localhost:8080/transfer_ft -d '{"sender":"<sender DID>", "receiver":<receiver DID>, "ft_count":<number of FTs in int>, "ft_name":"<ft name>", "creatorDID":<DID of FT creator>}'
 
 ```
 #### sample with valid request 
@@ -335,4 +334,207 @@ curl -X GET "http://localhost:8080/get_ft_chain?did=bafybmihsas7ercw2upkuq5mpq2x
 **Response:**
 ```
 {"error":"Missing required parameters: tokenID"}
+```
+
+### Curl request to create NFT
+```
+curl -X POST "http://localhost:8080/create_nft -d '{"did":"<rubix node DID>", "metadata":<metadata file path>, "artifact":"<artifact file path>"}'
+
+```
+#### sample with valid request 
+```
+curl -X POST http://localhost:8080/create_nft -d '{
+    "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+    "metadata":"/home/maneesha/Rubix-Git/NFT/metadata.json",
+    "artifact":"/home/maneesha/Rubix-Git/NFT/test.png"
+}'
+```
+**Response:**
+```
+"NFT Token generated successfully"
+```
+#### sample with invalid request (invalid input path to artifact)
+```
+curl -X POST http://localhost:8080/create_nft -d '{
+    "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+    "metadata":"/home/maneesha/Rubix-Git/NFT/metadata.json",
+    "artifact":"/home/maneesha/Rubix-Git/test.png"
+}'
+```
+**Response:**
+```
+{"error":"open /home/maneesha/Rubix-Git/test.png: no such file or directory"}
+```
+
+### Curl request to subscribe NFT
+```
+curl -X POST "http://localhost:8080/subscribe_nft -d '{"did":"<rubix node DID>", "nft":<nft token ID>}'
+
+```
+#### sample with valid request 
+```
+curl -X POST http://localhost:8080/subscribe_nft -d '{
+    "did":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq",
+    "nft":"QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY"
+}'
+```
+**Response:**
+```
+"NFT subscribed successfully"
+```
+#### sample with invalid request (invalid input to did)
+```
+curl -X POST http://localhost:8080/subscribe_nft -d '{
+    "did":"",
+    "nft":"QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY"
+}'
+```
+**Response:**
+```
+{"error":"User not found"}
+```
+
+### Curl request to deploy NFT
+```
+curl -X POST "http://localhost:8080/deploy_nft -d '{"did":"<rubix node DID>", "nft":"<nft ID>", "quorum_type":<1 or 2>}'
+
+```
+#### sample with valid request 
+```
+curl -X POST http://localhost:8080/deploy_nft -d '{
+    "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+    "nft":"QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY",
+    "quorum_type":2
+}'
+```
+**Response:**
+```
+"NFT Token generated successfully"
+```
+#### sample with invalid request (invalid input to quorum_type)
+```
+curl -X POST http://localhost:8080/deploy_nft -d '{
+    "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+    "nft":"QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY",
+    "quorum_type":4
+}'
+```
+**Response:**
+```
+{"error":"test token generation failed, Invalid quorum type"}
+```
+
+### Curl request to execute NFT
+```
+curl -X POST http://localhost:8080/execute_nft -d '{
+  "comment": "string",
+  "nft": "string",
+  "nft_data": "string",
+  "nft_value": 0.0,
+  "owner": "string",
+  "quorum_type": 0,
+  "receiver": "string"
+}'
+
+```
+#### sample with valid request 
+```
+curl -X POST http://localhost:8080/execute_nft -d '{
+  "comment": "nft transfer from wallet",
+  "nft": "QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY",
+  "nft_data": "",
+  "nft_value": 10.0,
+  "owner": "bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+  "quorum_type": 2,
+  "receiver": "bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq"
+}'
+```
+**Response:**
+```
+"NFT Executed successfully in 2.281952715s"
+```
+#### sample with invalid request (invalid input )
+```
+curl -X POST http://localhost:8080/execute_nft -d '{
+  "comment": "nft transfer from wallet",
+  "nft": "QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY",
+  "nft_data": "",
+  "nft_value": 5,
+  "owner": "bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq",
+  "quorum_type": 2,
+  "receiver": "bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu"
+}'
+```
+**Response:**
+```
+{"error":"test token generation failed, no records found"}
+```
+
+### Curl request to fetch NFT
+```
+curl -X GET "http://localhost:8080/get_nft?did=<string>&nft=<string>"
+```
+#### sample with valid request 
+```
+curl -X GET "http://localhost:8080/get_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&nft=QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY"
+```
+**Response:**
+```
+{"message":"NFT fetched successfully","result":null,"status":true}
+```
+#### sample with invalid request (invalid input path to artifact)
+```
+curl -X POST http://localhost:8080/create_nft -d '{
+    "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+    "metadata":"/home/maneesha/Rubix-Git/NFT/metadata.json",
+    "artifact":"/home/maneesha/Rubix-Git/test.png"
+}'
+```
+**Response:**
+```
+{"error":"open /home/maneesha/Rubix-Git/test.png: no such file or directory"}
+```
+
+### Curl request to get NFT chain
+```
+curl -X GET "http://localhost:8080/get_nft_chain?did=<string>&nft=<string>&latest=<string>"
+
+```
+#### sample with valid request 
+```
+curl -X GET "http://localhost:8080/get_nft_chain?did=bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq&nft=QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY"
+```
+**Response:**
+```
+{"NFTDataReply":[{"BlockId":"1-04886a33a4a69f18cd10d6e878edfa6b6dcdc2f354db07e79a64393008707975","BlockNo":1,"NFTData":"","NFTOwner":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq","NFTValue":10}],"message":"Fetched latest block details of nft","result":null,"status":true}
+```
+#### sample with invalid request (invalid input to nft)
+```
+curl -X GET "http://localhost:8080/get_nft_chain?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&nft=QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfikj"
+```
+**Response:**
+```
+{"NFTDataReply":null,"message":"Failed to get nft data, token does not exist","result":null,"status":false}
+```
+
+### Curl request to get all NFTs
+```
+curl -X GET "http://localhost:8080/get_all_nft?did=<string>"
+
+```
+#### sample with valid request 
+```
+curl -X GET "http://localhost:8080/get_all_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq"
+```
+**Response:**
+```
+{"message":"Got All NFTs","nfts":[{"nft":"QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY","nft_value":0,"owner_did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq"}],"result":null,"status":true}
+```
+#### sample with invalid request (invalid input to did)
+```
+curl -X GET "http://localhost:8080/get_all_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamjh"
+```
+**Response:**
+```
+{"error":"User not found"}
 ```

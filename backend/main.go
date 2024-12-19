@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -123,9 +125,41 @@ type TransferFTReq struct {
 
 // peer details struct
 type DIDPeerMap struct {
-	DID     string `json:"did"`
-	DIDType int    `json:"did_type"`
-	PeerID  string `json:"peer_id"`
+	SelfDID string `json:"self_did"`
+	PeerDID string `json:"DID"`
+	DIDType int    `json:"DIDType"`
+	PeerID  string `json:"PeerID"`
+}
+
+// create NFT request
+type CreateNFTRequest struct {
+	DID          string `json:"did"`
+	MetadataPath string `json:"metadata"`
+	ArtifactPath string `json:"artifact"`
+}
+
+// subscribe NFT request
+type SubscribeNFTRequest struct {
+	DID string `json:"did"`
+	NFT string `json:"nft"`
+}
+
+// deploy NFT request
+type DeployNFTRequest struct {
+	DID        string `json:"did"`
+	NFT        string `json:"nft"`
+	QuorumType int    `json:"quorum_type"`
+}
+
+// execute NFT request
+type ExecuteNFTRequest struct {
+	DID        string  `json:"owner"`
+	NFT        string  `json:"nft"`
+	NFTData    string  `json:"nft_data"`
+	NFTValue   float64 `json:"nft_value"`
+	Receiver   string  `json:"receiver"`
+	QuorumType int     `json:"quorum_type"`
+	Comment    string  `json:"comment"`
 }
 
 func main() {
@@ -171,6 +205,14 @@ func main() {
 	r.POST("/transfer_ft", transferFTHandler)
 	r.GET("/get_all_ft", getAllFTHandler)
 	r.GET("/get_ft_chain", getFTChainHandler)
+	//NFT features
+	r.POST("create_nft", createNFTHandler)
+	r.POST("subscribe_nft", subscribeNFTHandler)
+	r.POST("deploy_nft", deployNFTHandler)
+	r.POST("execute_nft", executeNFTHandler)
+	r.GET("get_nft", getNFTHandler)
+	r.GET("get_nft_chain", getNFTChainHandler)
+	r.GET("get_all_nft", getAllNFTHandler)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -254,7 +296,7 @@ func createUserHandler(c *gin.Context) {
 	}
 
 	// Create the wallet and fetch the DID
-	walletRequest := `{"port": 20009}`
+	walletRequest := `{"port": 20013}`
 	resp, err := http.Post("http://localhost:8080/create_wallet", "application/json", bytes.NewBuffer([]byte(walletRequest)))
 	if err != nil {
 		log.Printf("Error calling /create_wallet: %v", err)
@@ -522,7 +564,7 @@ func registerDIDHandler(c *gin.Context) {
 	resp, err := registerDIDRequest(req.DID, strconv.Itoa(user.Port))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		// Add a newline to the response body if required
 		c.Writer.Write([]byte("\n"))
@@ -626,7 +668,7 @@ func addPeerHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.DID)
+	user, err := storage.GetUserByDID(req.SelfDID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		// Add a newline to the response body if required
@@ -637,7 +679,7 @@ func addPeerHandler(c *gin.Context) {
 	resp, err := addPeerRequest(req, strconv.Itoa(user.Port))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		// Add a newline to the response body if required
 		c.Writer.Write([]byte("\n"))
@@ -818,7 +860,7 @@ func createTestRBTHandler(c *gin.Context) {
 	resp, err := GenerateTestRBT(req, strconv.Itoa(user.Port))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		// Add a newline to the response body if required
 		c.Writer.Write([]byte("\n"))
@@ -1172,7 +1214,7 @@ func unpledgeRBTHandler(c *gin.Context) {
 	resp, err := unpledgeRBTRequest(req, strconv.Itoa(user.Port))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		// Add a newline to the response body if required
 		c.Writer.Write([]byte("\n"))
@@ -1249,7 +1291,7 @@ func createFTHandler(c *gin.Context) {
 	resp, err := createFTReq(req, strconv.Itoa(user.Port))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		// Add a newline to the response body if required
 		c.Writer.Write([]byte("\n"))
@@ -1487,6 +1529,570 @@ func getFTChainHandler(c *gin.Context) {
 func getFTChainRequest(tokenID string, rubixNodePort string) (map[string]interface{}, error) {
 
 	url := fmt.Sprintf("http://localhost:%s/api/get-ft-token-chain?tokenID=%s", rubixNodePort, tokenID)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return nil, err
+	}
+
+	// Parse the response into a map
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+	return response, nil
+}
+
+// NFT Handlers
+// createNFTHandler
+func createNFTHandler(c *gin.Context) {
+	var req CreateNFTRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(req.DID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := createNFTReq(req, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// createFTReq requests the rubix node to create FTs
+func createNFTReq(data CreateNFTRequest, rubixNodePort string) (string, error) {
+	// Create a buffer to hold the multipart form data
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	// Add the "did" field
+	err := writer.WriteField("did", data.DID)
+	if err != nil {
+		fmt.Println("Error adding DID field:", err)
+		return "", err
+	}
+
+	// Add the "metadata" file
+	metadataFile, err := os.Open(data.MetadataPath)
+	if err != nil {
+		fmt.Println("Error opening metadata file:", err)
+		return "", err
+	}
+	defer metadataFile.Close()
+
+	metadataPart, err := writer.CreateFormFile("metadata", data.MetadataPath)
+	if err != nil {
+		fmt.Println("Error creating metadata form file:", err)
+		return "", err
+	}
+
+	_, err = io.Copy(metadataPart, metadataFile)
+	if err != nil {
+		fmt.Println("Error copying metadata file:", err)
+		return "", err
+	}
+
+	// Add the "artifact" file
+	artifactFile, err := os.Open(data.ArtifactPath)
+	if err != nil {
+		fmt.Println("Error opening artifact file:", err)
+		return "", err
+	}
+	defer artifactFile.Close()
+
+	artifactPart, err := writer.CreateFormFile("artifact", data.ArtifactPath)
+	if err != nil {
+		fmt.Println("Error creating artifact form file:", err)
+		return "", err
+	}
+
+	_, err = io.Copy(artifactPart, artifactFile)
+	if err != nil {
+		fmt.Println("Error copying artifact file:", err)
+		return "", err
+	}
+
+	// Close the writer to finalize the form data
+	err = writer.Close()
+	if err != nil {
+		fmt.Println("Error finalizing form data:", err)
+		return "", err
+	}
+
+	// Prepare the HTTP request
+	url := fmt.Sprintf("http://localhost:%s/api/create-nft", rubixNodePort)
+	req, err := http.NewRequest("POST", url, body)
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return "", err
+	}
+
+	// Process the data as needed
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+
+	respMsg := response["message"].(string)
+	respStatus := response["status"].(bool)
+
+	if !respStatus {
+		return "", fmt.Errorf("test token generation failed, %s", respMsg)
+	}
+
+	return respMsg, nil
+}
+
+// subscribeNFTHandler: Request to subscribe NFT
+func subscribeNFTHandler(c *gin.Context) {
+	var req SubscribeNFTRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(req.DID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := subscribeNFTRequest(req.NFT, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// subscribeNFTRequest sends request to subscribe NFT
+func subscribeNFTRequest(nft string, rubixNodePort string) (string, error) {
+	data := map[string]interface{}{
+		"nft": nft,
+	}
+	bodyJSON, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return "", err
+	}
+
+	url := fmt.Sprintf("http://localhost:%s/api/subscribe-nft", rubixNodePort)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyJSON))
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return "", err
+	}
+
+	// Process the data as needed
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+
+	respMsg := response["message"].(string)
+	respStatus := response["status"].(bool)
+
+	if !respStatus {
+		return "", fmt.Errorf("test token generation failed, %s", respMsg)
+	}
+
+	return respMsg, nil
+}
+
+// deployNFTHandler: Request to deploy NFT
+func deployNFTHandler(c *gin.Context) {
+	var req DeployNFTRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(req.DID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := deployNFTRequest(req, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// deployNFTRequest sends request to deploy NFT
+func deployNFTRequest(data DeployNFTRequest, rubixNodePort string) (string, error) {
+
+	bodyJSON, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return "", err
+	}
+
+	url := fmt.Sprintf("http://localhost:%s/api/deploy-nft", rubixNodePort)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyJSON))
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return "", err
+	}
+
+	// Process the data as needed
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+
+	respMsg := response["message"].(string)
+	respStatus := response["status"].(bool)
+
+	if !respStatus {
+		return "", fmt.Errorf("test token generation failed, %s", respMsg)
+	}
+
+	return respMsg, nil
+}
+
+// executeNFTHandler: Request to execute NFT
+func executeNFTHandler(c *gin.Context) {
+	var req ExecuteNFTRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(req.DID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := executeNFTRequest(req, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// executeNFTRequest sends request to execute NFT
+func executeNFTRequest(data ExecuteNFTRequest, rubixNodePort string) (string, error) {
+
+	bodyJSON, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return "", err
+	}
+
+	url := fmt.Sprintf("http://localhost:%s/api/execute-nft", rubixNodePort)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyJSON))
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return "", err
+	}
+
+	// Process the data as needed
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+
+	respMsg := response["message"].(string)
+	respStatus := response["status"].(bool)
+
+	if !respStatus {
+		return "", fmt.Errorf("test token generation failed, %s", respMsg)
+	}
+
+	return respMsg, nil
+}
+
+// getNFTHandler: Request to provide all NFT info
+func getNFTHandler(c *gin.Context) {
+	did := c.Query("did")
+
+	if did == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
+		return
+	}
+
+	nft := c.Query("nft")
+
+	if nft == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := getNFTRequest(nft, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// getNFTRequest sends request to Rubix node to provide NFT info
+func getNFTRequest(nft string, rubixNodePort string) (map[string]interface{}, error) {
+
+	url := fmt.Sprintf("http://localhost:%s/api/fetch-nft?nft=%s", rubixNodePort, nft)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return nil, err
+	}
+
+	// Parse the response into a map
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+	return response, nil
+}
+
+// getNFTChainHandler: Request to fetch NFT chain
+func getNFTChainHandler(c *gin.Context) {
+	did := c.Query("did")
+
+	if did == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
+		return
+	}
+
+	nft := c.Query("nft")
+
+	if nft == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: tokenID"})
+		return
+	}
+
+	latest := c.Query("latest")
+
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := getNFTChainRequest(nft, latest, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// getNFTChainRequest sends request to Rubix node to provide NFT chain
+func getNFTChainRequest(nft string, latest string, rubixNodePort string) (map[string]interface{}, error) {
+
+	url := fmt.Sprintf("http://localhost:%s/api/get-nft-token-chain-data?nft=%s&latest=%s", rubixNodePort, nft, latest)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating HTTP request:", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending HTTP request:", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	data2, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("Error reading response body: %s\n", err)
+		return nil, err
+	}
+
+	// Parse the response into a map
+	var response map[string]interface{}
+	err = json.Unmarshal(data2, &response)
+	if err != nil {
+		fmt.Println("Error unmarshaling response:", err)
+	}
+	return response, nil
+}
+
+// getAllNFTHandler: Request to provide all NFTs' info
+func getAllNFTHandler(c *gin.Context) {
+	did := c.Query("did")
+
+	if did == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
+		return
+	}
+
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	resp, err := getAllNFTRequest(did, strconv.Itoa(user.Port))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		// Add a newline to the response body if required
+		c.Writer.Write([]byte("\n"))
+	}
+
+	c.JSON(http.StatusOK, resp)
+	// Add a newline to the response body if required
+	c.Writer.Write([]byte("\n"))
+}
+
+// getAllNFTRequest sends request to Rubix node to provide all NFTs' info
+func getAllNFTRequest(did string, rubixNodePort string) (map[string]interface{}, error) {
+
+	url := fmt.Sprintf("http://localhost:%s/api/get-nfts-by-did?did=%s", rubixNodePort, did)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Error creating HTTP request:", err)
