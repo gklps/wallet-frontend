@@ -35,7 +35,7 @@ curl -X POST http://localhost:8080/register_did -d '{"did":"<user DID>"}'
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/register_did -d '{"did":"bafybmigfq7dnhqdpghluqfirvn5yz76vpvrkutofswih7sidmqmssohvbq"}'
+curl -X POST http://localhost:8080/register_did -d '{"did":"bafybmibuj72pm5x6yjhmfgacfusbk5veur5poqfm7qibk45kk5ktiep3d4"}'
 ```
 **Response:**
 ```
@@ -101,7 +101,7 @@ curl -X POST http://localhost:8080/testrbt/create -d '{"did":"<rubix node DID>",
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmieksq2loys6qpszqju33omatw4prgic6kwnpxkklkl2zeslog4g34", "number_of_tokens":10}'
+curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq", "number_of_tokens":10}'
 ```
 **Response:**
 ```
@@ -124,7 +124,7 @@ curl -X GET "http://localhost:8080/request_balance?did=<user DID>"
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/request_balance?did=bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq"
+curl -X GET "http://localhost:8080/request_balance?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq"
 ```
 **Response:**
 ```
@@ -346,7 +346,7 @@ curl -X POST "http://localhost:8080/create_nft -d '{"did":"<rubix node DID>", "m
 curl -X POST http://localhost:8080/create_nft -d '{
     "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
     "metadata":"/home/maneesha/Rubix-Git/NFT/metadata.json",
-    "artifact":"/home/maneesha/Rubix-Git/NFT/test.png"
+    "artifact":"/home/maneesha/Rubix-Git/NFT/image.png"
 }'
 ```
 **Response:**
@@ -374,8 +374,8 @@ curl -X POST "http://localhost:8080/subscribe_nft -d '{"did":"<rubix node DID>",
 #### sample with valid request 
 ```
 curl -X POST http://localhost:8080/subscribe_nft -d '{
-    "did":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq",
-    "nft":"QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY"
+    "did":"bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu",
+    "nft":"QmPCe9otZasFkDx21jkmuQ351CkefgeMHNCwDnv3QSTXkw"
 }'
 ```
 **Response:**
@@ -403,7 +403,7 @@ curl -X POST "http://localhost:8080/deploy_nft -d '{"did":"<rubix node DID>", "n
 ```
 curl -X POST http://localhost:8080/deploy_nft -d '{
     "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
-    "nft":"QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY",
+    "nft":"QmPCe9otZasFkDx21jkmuQ351CkefgeMHNCwDnv3QSTXkw",
     "quorum_type":2
 }'
 ```
@@ -441,12 +441,12 @@ curl -X POST http://localhost:8080/execute_nft -d '{
 ```
 curl -X POST http://localhost:8080/execute_nft -d '{
   "comment": "nft transfer from wallet",
-  "nft": "QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY",
+  "nft": "QmPCe9otZasFkDx21jkmuQ351CkefgeMHNCwDnv3QSTXkw",
   "nft_data": "",
-  "nft_value": 10.0,
-  "owner": "bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+  "nft_value": 19.0,
+  "owner": "bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq",
   "quorum_type": 2,
-  "receiver": "bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq"
+  "receiver": "bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq"
 }'
 ```
 **Response:**
@@ -476,7 +476,7 @@ curl -X GET "http://localhost:8080/get_nft?did=<string>&nft=<string>"
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/get_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&nft=QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY"
+curl -X GET "http://localhost:8080/get_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&nft=QmT5EMvrozZWyQZsX6UpBR9muoAfjmbBqEHdUzWsRNw1jr"
 ```
 **Response:**
 ```
@@ -502,7 +502,7 @@ curl -X GET "http://localhost:8080/get_nft_chain?did=<string>&nft=<string>&lates
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/get_nft_chain?did=bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq&nft=QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY"
+curl -X GET "http://localhost:8080/get_nft_chain?did=bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq&nft=QmT5EMvrozZWyQZsX6UpBR9muoAfjmbBqEHdUzWsRNw1jr"
 ```
 **Response:**
 ```
@@ -524,7 +524,7 @@ curl -X GET "http://localhost:8080/get_all_nft?did=<string>"
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/get_all_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq"
+curl -X GET "http://localhost:8080/get_all_nft?did=bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu"
 ```
 **Response:**
 ```

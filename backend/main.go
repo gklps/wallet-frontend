@@ -189,8 +189,8 @@ func main() {
 	// API endpoints
 	//DID features
 	r.POST("/create_wallet", createWalletHandler)
-	r.POST("/register_did", registerDIDHandler)
-	r.POST("/setup_quorum", setupQuorumHandler)
+	r.POST("/register_did", authenticate, registerDIDHandler)
+	r.POST("/setup_quorum", authenticate, setupQuorumHandler)
 	r.POST("/add_peer", addPeerHandler)
 	//RBT features
 	r.GET("/request_balance", requestBalanceHandler)
@@ -393,6 +393,8 @@ func authenticate(c *gin.Context) {
 		return
 	}
 
+	// Store the user DID in the context for downstream handlers
+	c.Set("userDID", did)
 	c.Next()
 }
 
@@ -545,6 +547,14 @@ func createWalletHandler(c *gin.Context) {
 
 // Handler: registerDIDHandler publishes the user's DID in the network
 func registerDIDHandler(c *gin.Context) {
+	// Retrieve DID from the context
+	did, exists := c.Get("userDID")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve DID"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
 	var req ReqToRubixNode
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
@@ -552,6 +562,34 @@ func registerDIDHandler(c *gin.Context) {
 		c.Writer.Write([]byte("\n"))
 		return
 	}
+
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	// Extract the DID from the token
+	tokenString := c.GetHeader("Authorization")[7:] // Strip "Bearer "
+	token, _ := jwt.Parse(tokenString, nil)
+	claims := token.Claims.(jwt.MapClaims)
+
+	// Use string assertion for DID, since it's a string
+	_, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// // Fetch user info from database using DID
+	// var user User
+	// row := db.QueryRow("SELECT id, email, name, did FROM walletUsers WHERE did = ?", did)
+	// err := row.Scan(&user.ID, &user.Email, &user.Name, &user.DID)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch user"})
+	// 	return
+	// }
 
 	user, err := storage.GetUserByDID(req.DID)
 	if err != nil {
