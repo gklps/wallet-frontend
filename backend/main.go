@@ -189,7 +189,7 @@ func main() {
 	// API endpoints
 	//DID features
 	r.POST("/create_wallet", createWalletHandler)
-	r.POST("/register_did", authenticate, registerDIDHandler)
+	r.POST("/register_did", registerDIDHandler)
 	r.POST("/setup_quorum", authenticate, setupQuorumHandler)
 	r.POST("/add_peer", addPeerHandler)
 	//RBT features
@@ -547,11 +547,40 @@ func createWalletHandler(c *gin.Context) {
 
 // Handler: registerDIDHandler publishes the user's DID in the network
 func registerDIDHandler(c *gin.Context) {
-	// Retrieve DID from the context
-	did, exists := c.Get("userDID")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve DID"})
-		c.Writer.Write([]byte("\n"))
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 		return
 	}
 
@@ -566,35 +595,6 @@ func registerDIDHandler(c *gin.Context) {
 	// Ensure the DID from the token matches the one in the request body
 	if req.DID != did {
 		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
-		c.Writer.Write([]byte("\n"))
-		return
-	}
-
-	// Extract the DID from the token
-	tokenString := c.GetHeader("Authorization")[7:] // Strip "Bearer "
-	token, _ := jwt.Parse(tokenString, nil)
-	claims := token.Claims.(jwt.MapClaims)
-
-	// Use string assertion for DID, since it's a string
-	_, ok := claims["sub"].(string)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
-		return
-	}
-
-	// // Fetch user info from database using DID
-	// var user User
-	// row := db.QueryRow("SELECT id, email, name, did FROM walletUsers WHERE did = ?", did)
-	// err := row.Scan(&user.ID, &user.Email, &user.Name, &user.DID)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch user"})
-	// 	return
-	// }
-
-	user, err := storage.GetUserByDID(req.DID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		// Add a newline to the response body if required
 		c.Writer.Write([]byte("\n"))
 		return
 	}
@@ -615,6 +615,43 @@ func registerDIDHandler(c *gin.Context) {
 
 // Handler: registerDIDHandler publishes the user's DID in the network
 func setupQuorumHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
 	var req ReqToRubixNode
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
@@ -623,10 +660,9 @@ func setupQuorumHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.DID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		// Add a newline to the response body if required
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
 		c.Writer.Write([]byte("\n"))
 		return
 	}
@@ -698,6 +734,43 @@ func setupQuorumRequest(did string, rubixNodePort string) (string, error) {
 
 // Handler: registerDIDHandler publishes the user's DID in the network
 func addPeerHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
 	var req DIDPeerMap
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
@@ -706,10 +779,9 @@ func addPeerHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.SelfDID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		// Add a newline to the response body if required
+	// Ensure the DID from the token matches the one in the request body
+	if req.SelfDID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
 		c.Writer.Write([]byte("\n"))
 		return
 	}
@@ -813,21 +885,59 @@ func signTransactionHandler(c *gin.Context) {
 
 // Handler: Request transaction
 func requestTransactionHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
 	var req TxnRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	jwtToken, err := GenerateJWT(req.DID, req.ReceiverDID, req.RBTAmount)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT"})
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.DID)
+	jwtToken, err := GenerateJWT(req.DID, req.ReceiverDID, req.RBTAmount)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT"})
 		return
 	}
 
@@ -851,16 +961,54 @@ func requestTransactionHandler(c *gin.Context) {
 
 // Handler: Request RBT balance
 func requestBalanceHandler(c *gin.Context) {
-	did := c.Query("did")
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
 
-	if did == "" {
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	userDID := c.Query("did")
+
+	if userDID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
 		return
 	}
 
-	user, err := storage.GetUserByDID(did)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Ensure the DID from the token matches the one in the request body
+	if userDID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -879,6 +1027,44 @@ func requestBalanceHandler(c *gin.Context) {
 
 // Handler: Request to generate test RBTs
 func createTestRBTHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
 	var req GenerateTestRBTRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
@@ -887,10 +1073,9 @@ func createTestRBTHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.DID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		// Add a newline to the response body if required
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
 		c.Writer.Write([]byte("\n"))
 		return
 	}
@@ -911,22 +1096,61 @@ func createTestRBTHandler(c *gin.Context) {
 
 // Handler: Request to fetch Txns list by DID
 func getTxnByDIDHandler(c *gin.Context) {
-	did := c.Query("did")
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
 
-	if did == "" {
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	userDID := c.Query("did")
+
+	if userDID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did \n"})
+		return
+	}
+
+	// Ensure the DID from the token matches the one in the request body
+	if userDID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
 	role := c.Query("role")
 	startDate := c.Query("StartDate")
 	endDate := c.Query("EndDate")
-
-	user, err := storage.GetUserByDID(did)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
 
 	result, err := RequestTxnsByDID(did, role, startDate, endDate, strconv.Itoa(user.Port))
 	if err != nil {
@@ -1233,6 +1457,44 @@ func registerDIDRequest(did string, rubixNodePort string) (string, error) {
 
 // Handler: Request to unpledge pledged RBTs
 func unpledgeRBTHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
 	var req ReqToRubixNode
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
@@ -1241,10 +1503,9 @@ func unpledgeRBTHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.DID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		// Add a newline to the response body if required
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
 		c.Writer.Write([]byte("\n"))
 		return
 	}
@@ -1314,15 +1575,54 @@ func unpledgeRBTRequest(data ReqToRubixNode, rubixNodePort string) (string, erro
 // FT Handlers
 // createFTHandler: Request to create FT
 func createFTHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
 	var req CreateFTRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.DID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -1390,15 +1690,54 @@ func createFTReq(data CreateFTRequest, rubixNodePort string) (string, error) {
 
 // transferFTHandler: Request to transfer FTs
 func transferFTHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
 	var req TransferFTReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.Sender)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Ensure the DID from the token matches the one in the request body
+	if req.Sender != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -1466,16 +1805,55 @@ func transferFTRequest(data TransferFTReq, rubixNodePort string) (string, error)
 
 // getAllFTHandler: Request to provide all FTs' info
 func getAllFTHandler(c *gin.Context) {
-	did := c.Query("did")
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
 
-	if did == "" {
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	userDID := c.Query("did")
+
+	if userDID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
 		return
 	}
 
-	user, err := storage.GetUserByDID(did)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Ensure the DID from the token matches the one in the request body
+	if userDID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -1529,10 +1907,54 @@ func getAllFTRequest(did string, rubixNodePort string) (map[string]interface{}, 
 
 // getFTChainHandler: Request to fetch FT chain
 func getFTChainHandler(c *gin.Context) {
-	did := c.Query("did")
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
 
-	if did == "" {
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	userDID := c.Query("did")
+
+	if userDID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
+		return
+	}
+	// Ensure the DID from the token matches the one in the request body
+	if userDID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -1540,12 +1962,6 @@ func getFTChainHandler(c *gin.Context) {
 
 	if tokenID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: tokenID"})
-		return
-	}
-
-	user, err := storage.GetUserByDID(did)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
@@ -1600,15 +2016,53 @@ func getFTChainRequest(tokenID string, rubixNodePort string) (map[string]interfa
 // NFT Handlers
 // createNFTHandler
 func createNFTHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
 	var req CreateNFTRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-
-	user, err := storage.GetUserByDID(req.DID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -1728,15 +2182,54 @@ func createNFTReq(data CreateNFTRequest, rubixNodePort string) (string, error) {
 
 // subscribeNFTHandler: Request to subscribe NFT
 func subscribeNFTHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
 	var req SubscribeNFTRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.DID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -1806,15 +2299,54 @@ func subscribeNFTRequest(nft string, rubixNodePort string) (string, error) {
 
 // deployNFTHandler: Request to deploy NFT
 func deployNFTHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
 	var req DeployNFTRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.DID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -1882,15 +2414,54 @@ func deployNFTRequest(data DeployNFTRequest, rubixNodePort string) (string, erro
 
 // executeNFTHandler: Request to execute NFT
 func executeNFTHandler(c *gin.Context) {
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
+
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
 	var req ExecuteNFTRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	user, err := storage.GetUserByDID(req.DID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Ensure the DID from the token matches the one in the request body
+	if req.DID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -1958,10 +2529,55 @@ func executeNFTRequest(data ExecuteNFTRequest, rubixNodePort string) (string, er
 
 // getNFTHandler: Request to provide all NFT info
 func getNFTHandler(c *gin.Context) {
-	did := c.Query("did")
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
 
-	if did == "" {
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	userDID := c.Query("did")
+
+	if userDID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
+		return
+	}
+
+	// Ensure the DID from the token matches the one in the request body
+	if userDID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -1969,12 +2585,6 @@ func getNFTHandler(c *gin.Context) {
 
 	if nft == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
-		return
-	}
-
-	user, err := storage.GetUserByDID(did)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
@@ -2028,10 +2638,55 @@ func getNFTRequest(nft string, rubixNodePort string) (map[string]interface{}, er
 
 // getNFTChainHandler: Request to fetch NFT chain
 func getNFTChainHandler(c *gin.Context) {
-	did := c.Query("did")
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
 
-	if did == "" {
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	userDID := c.Query("did")
+
+	if userDID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
+		return
+	}
+
+	// Ensure the DID from the token matches the one in the request body
+	if userDID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -2043,12 +2698,6 @@ func getNFTChainHandler(c *gin.Context) {
 	}
 
 	latest := c.Query("latest")
-
-	user, err := storage.GetUserByDID(did)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
 
 	resp, err := getNFTChainRequest(nft, latest, strconv.Itoa(user.Port))
 	if err != nil {
@@ -2100,16 +2749,55 @@ func getNFTChainRequest(nft string, latest string, rubixNodePort string) (map[st
 
 // getAllNFTHandler: Request to provide all NFTs' info
 func getAllNFTHandler(c *gin.Context) {
-	did := c.Query("did")
+	tokenString := c.GetHeader("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+		c.Abort()
+		return
+	}
 
-	if did == "" {
+	tokenString = tokenString[len("Bearer "):]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	// Extract the DID claim from the token
+	claims := token.Claims.(jwt.MapClaims)
+	did, ok := claims["sub"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: missing or invalid DID"})
+		return
+	}
+
+	// Optionally, verify the DID exists in the database
+	user, err := storage.GetUserByDID(did)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Writer.Write([]byte("\n"))
+		return
+	}
+
+	userDID := c.Query("did")
+
+	if userDID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameter: did"})
 		return
 	}
 
-	user, err := storage.GetUserByDID(did)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+	// Ensure the DID from the token matches the one in the request body
+	if userDID != did {
+		c.JSON(http.StatusForbidden, gin.H{"error": "DID mismatch"})
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 

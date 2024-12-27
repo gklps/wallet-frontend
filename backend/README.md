@@ -7,6 +7,17 @@ This is a non-custodial wallet server, which manages keys for rubix nodes. It us
 go run wallet.go
 
 ```
+
+### Curl request to login
+```
+curl -X POST http://localhost:8080/login -d '{"email":"riya@gmail.com","password":"123"}'
+``` 
+
+### Curl request to view profile
+```
+curl -L -X GET 'http://localhost:8080/profile' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1Mzk2NzYsInN1YiI6ImJhZnlibWliM3R2cWxuYjI1dWhwZHd2Mnk0d2JodHR6bXB3ZGVsM25ibGZvdTN2dTR2enY3YjNieWJxIn0.eMTEEtErNj4I7_MfO-0PiP2djnVz1rMZtAkCF3Hpbs8' 
+```
+
 ### Curl request to create a wallet
 ```
 curl -X POST http://localhost:8080/create_wallet -d '{"port":<rubix node port number in int>}'
@@ -31,63 +42,63 @@ curl -X POST http://localhost:8080/create_wallet -d '{"port":20001}'
 
 ### Curl request to register did
 ```
-curl -X POST http://localhost:8080/register_did -d '{"did":"<user DID>"}'
+curl -L -X POST http://localhost:8080/register_did -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<user DID>"}'
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/register_did -d '{"did":"bafybmibuj72pm5x6yjhmfgacfusbk5veur5poqfm7qibk45kk5ktiep3d4"}'
+curl -L -X POST http://localhost:8080/register_did -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU0NjY4MjIsInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.NeIFZ0BitoO5hEaMF_fZbyyCGD2b4jh9FVM4536VMFI' -d '{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq"}'
 ```
 **Response:**
 ```
 "DID registered successfully"
 ```
-#### sample with invalid request (invalid port)
+#### sample with invalid request (invalid did)
 ```
-curl -X POST http://localhost:8080/register_did -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2fgh"}'
+curl -L -X POST http://localhost:8080/register_did -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU0NjY4MjIsInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.NeIFZ0BitoO5hEaMF_fZbyyCGD2b4jh9FVM4536VMFI' -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2fgh"}'
 ```
 **Response:**
 ```
-{"error":"User not found"}
+{"error":"DID mismatch"}
 ```
 
 
 ### Curl request to setup quorum 
 ```
-curl -X POST http://localhost:8080/setup_quorum -d '{"did":"<user DID>"}'
+curl -L -X POST http://localhost:8080/setup_quorum -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<user DID>"}'
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/setup_quorum -d '{"did":"bafybmieksq2loys6qpszqju33omatw4prgic6kwnpxkklkl2zeslog4g34"}'
+curl -L -X POST 'http://localhost:8080/setup_quorum' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU0NjY4MjIsInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.NeIFZ0BitoO5hEaMF_fZbyyCGD2b4jh9FVM4536VMFI' -d '{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq"}'
 ```
 **Response:**
 ```
 "Quorum setup done successfully"
 ```
-#### sample with invalid request (invalid port)
+#### sample with invalid request (invalid did)
 ```
-curl -X POST http://localhost:8080/setup_quorum -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2fgh"}'
+curl -L -X POST 'http://localhost:8080/setup_quorum' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU0NjY4MjIsInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.NeIFZ0BitoO5hEaMF_fZbyyCGD2b4jh9FVM4536VMFI' -d '{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttajhg"}'
 ```
 **Response:**
 ```
-{"error":"User not found"}
+{"error":"DID mismatch"}
 ```
 
 
 ### Curl request to add peer info 
 ```
-curl -X POST http://localhost:8080/add_peer -d '{"self_did":"<user did>", "DID":"<peer did>", "DIDType":<0 to 4>, "PeerID":"<peer ID>"}'
+curl -L -X POST http://localhost:8080/add_peer -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"self_did":"<user did>", "DID":"<peer did>", "DIDType":<0 to 4>, "PeerID":"<peer ID>"}'
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/add_peer -d '{"self_did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq", "DID":"bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu", "DIDType":4, "PeerID":"12D3KooWRimkVSDAcwESk7HtKTtYaUmzpVrnfidkNKL5HyWVRpTL"}'
+curl -L -X POST http://localhost:8080/add_peer -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU0NjY4MjIsInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.NeIFZ0BitoO5hEaMF_fZbyyCGD2b4jh9FVM4536VMFI' -d '{"self_did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq", "DID":"bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu", "DIDType":4, "PeerID":"12D3KooWRimkVSDAcwESk7HtKTtYaUmzpVrnfidkNKL5HyWVRpTL"}'
 ```
 **Response:**
 ```
 "Peers added successfully"
 ```
-#### sample with invalid request (invalid did)
+#### sample with invalid request (invalid peerId)
 ```
-curl -X POST http://localhost:8080/add_peer -d '{"self_did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq", "DID":"bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu", "DIDType":4, "PeerID":""}'
+curl -L -X POST http://localhost:8080/add_peer -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU0NjY4MjIsInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.NeIFZ0BitoO5hEaMF_fZbyyCGD2b4jh9FVM4536VMFI' -d '{"self_did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq", "DID":"bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcjh", "DIDType":4, "PeerID":""}'
 ```
 **Response:**
 ```
@@ -96,12 +107,12 @@ curl -X POST http://localhost:8080/add_peer -d '{"self_did":"bafybmifebqlvq2uetx
 
 ### Curl request to generate test RBT
 ```
-curl -X POST http://localhost:8080/testrbt/create -d '{"did":"<rubix node DID>", "number_of_tokens":<amount in int>}'
+curl -L -X POST http://localhost:8080/testrbt/create -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<rubix node DID>", "number_of_tokens":<amount in int>}'
 
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq", "number_of_tokens":10}'
+curl -L -X POST http://localhost:8080/testrbt/create -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1Mzk2NzYsInN1YiI6ImJhZnlibWliM3R2cWxuYjI1dWhwZHd2Mnk0d2JodHR6bXB3ZGVsM25ibGZvdTN2dTR2enY3YjNieWJxIn0.eMTEEtErNj4I7_MfO-0PiP2djnVz1rMZtAkCF3Hpbs8' -d '{"did":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq", "number_of_tokens":10}'
 ```
 **Response:**
 ```
@@ -109,7 +120,7 @@ curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmifebqlvq2uet
 ```
 #### sample with invalid request (invalid input format to number_of_tokens)
 ```
-curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq", "number_of_tokens":1.0}'
+curl -L -X POST http://localhost:8080/testrbt/create -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1Mzk2NzYsInN1YiI6ImJhZnlibWliM3R2cWxuYjI1dWhwZHd2Mnk0d2JodHR6bXB3ZGVsM25ibGZvdTN2dTR2enY3YjNieWJxIn0.eMTEEtErNj4I7_MfO-0PiP2djnVz1rMZtAkCF3Hpbs8' -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq", "number_of_tokens":1.0}'
 ```
 **Response:**
 ```
@@ -119,12 +130,12 @@ curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmic6olksvxucq
 
 ### Curl request to get balance
 ```
-curl -X GET "http://localhost:8080/request_balance?did=<user DID>"
+curl -L -X GET "http://localhost:8080/request_balance?did=<user DID>" -H 'Authorization: Bearer <jwt token returned while logging in>'
 
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/request_balance?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq"
+curl -L -X GET "http://localhost:8080/request_balance?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
@@ -132,22 +143,22 @@ curl -X GET "http://localhost:8080/request_balance?did=bafybmifebqlvq2uetxo3mgrw
 ```
 #### sample with invalid request (empty input to did)
 ```
-curl -X GET "http://localhost:8080/request_balance?did="
+curl -L -X GET "http://localhost:8080/request_balance?did=" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU0NjY4MjIsInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.NeIFZ0BitoO5hEaMF_fZbyyCGD2b4jh9FVM4536VMFI'
 ```
 **Response:**
 ```
-{"error":"Missing required parameters: port or did"}
+{"error":"Missing required parameter: did"}
 ```
 
 
 ### Curl request to unpledge pledged RBTs
 ```
-curl -X POST http://localhost:8080/rbt/unpledge -d '{"did":"<user DID>"}'
+curl -L -X POST http://localhost:8080/rbt/unpledge -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<user DID>"}'
 
 ```
 #### sample with valid request (pending)
 ```
-curl -X POST http://localhost:8080/rbt/unpledge -d '{"did":"bafybmig4x5q3ym4z7e53pgdvjfxdqvwsgidfy3yuezdwiqwbbdheqvp6qy"}'
+curl -L -X POST http://localhost:8080/rbt/unpledge -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NTAzNTQsInN1YiI6ImJhZnlibWlnZnE3ZG5ocWRwZ2hsdXFmaXJ2bjV5ejc2dnB2cmt1dG9mc3dpaDdzaWRtcW1zc29odmJxIn0.nmgjyGxALW-ecfmBiZMaBEWhdx4P_qLkiE-y9Zgy6Tc' -d '{"did":"bafybmigfq7dnhqdpghluqfirvn5yz76vpvrkutofswih7sidmqmssohvbq"}'
 ```
 **Response:**
 ```
@@ -155,11 +166,11 @@ curl -X POST http://localhost:8080/rbt/unpledge -d '{"did":"bafybmig4x5q3ym4z7e5
 ```
 #### sample with invalid request (invalid did)
 ```
-curl -X POST http://localhost:8080/rbt/unpledge -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2fgh"}'
+curl -L -X POST http://localhost:8080/rbt/unpledge -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU0NjY4MjIsInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.NeIFZ0BitoO5hEaMF_fZbyyCGD2b4jh9FVM4536VMFI' -d '{"did":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3byhj"}'
 ```
 **Response:**
 ```
-{"error":"User not found"}
+{"error":"DID mismatch"}
 ```
 
 
@@ -187,62 +198,62 @@ curl -X POST http://localhost:8080/sign -d '{"did":"bafybmic6olksvxucqrxfbwqptys
 
 ### Curl request to transfer RBTs
 ```
-curl -X POST http://localhost:8080/request_txn -d '{"did":"<sender DID>","receiver":"<receiver DID>", "rbt_amount":<transaction amount in float>}'
+curl -L -X POST http://localhost:8080/request_txn -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<sender DID>","receiver":"<receiver DID>", "rbt_amount":<transaction amount in float>}'
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/request_txn -d '{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","receiver":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq", "rbt_amount":2.56}'
+curl -L -X POST http://localhost:8080/request_txn -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","receiver":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq", "rbt_amount":2.56}'
 ```
 **Response:**
 ```
-{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq","jwt":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOiJiYWZ5Ym1pYzZvbGtzdnh1Y3FyeGZid3FwdHlzaHU1dGFocHJhd2huaXBlbWloajdvcGZjY3BrMmRicSIsImV4cCI6MTczMzkwOTUwMCwiaWF0IjoxNzMzODIzMTAwLCJyYnRfYW1vdW50IjoxLCJyZWNlaXZlcl9kaWQiOiJiYWZ5Ym1pYW8yZnlsenVwcHNyN2I3Y2VwbTMyZWdkNDY1dWhwbzNra3diaG5la3ZlNnUyYmVkd2IzbSJ9.srczpeBhwPK9CNa8jy6fLiUtbD0w8gFgBzlkmNRCL0M","status":"Transfer finished successfully in 2.406044531s with trnxid 828face14520df1a64d0760051afa32d8ef0036a95c00d7c9e0501f3ed9b6285"}
+{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","jwt":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOiJiYWZ5Ym1pZmVicWx2cTJ1ZXR4bzNtZ3J3dWdmM2s0cmRqdXBvNmg2ZmtuN216cmI1ZWtoeHR0YW1ucSIsImV4cCI6MTczNTM2OTc3NywiaWF0IjoxNzM1MjgzMzc3LCJyYnRfYW1vdW50IjoyLjU2LCJyZWNlaXZlcl9kaWQiOiJiYWZ5Ym1pYjN0dnFsbmIyNXVocGR3djJ5NHdiaHR0em1wd2RlbDNuYmxmb3UzdnU0dnp2N2IzYnlicSJ9.Bd3mdXLnsWeQlrSasAWfNjgmvqAls1MScTYMsMLVgHw","status":"Transfer finished successfully in 3.85767431s with trnxid d881d09212ef568009a81d37abf9506bf52e7990790bd6bf47c4113a6777abcc"}
 ```
 #### sample with invalid request (invalid rbt_amount)
 ```
-curl -X POST http://localhost:8080/request_txn -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq","receiver":"bafybmiao2fylzuppsr7b7cepm32egd465uhpo3kkwbhnekve6u2bedwb3m", "rbt_amount":1.07655}'
+curl -L -X POST http://localhost:8080/request_txn -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","receiver":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq", "rbt_amount":2.56087}'
 ```
 **Response:**
 ```
-{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq","jwt":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOiJiYWZ5Ym1pYzZvbGtzdnh1Y3FyeGZid3FwdHlzaHU1dGFocHJhd2huaXBlbWloajdvcGZjY3BrMmRicSIsImV4cCI6MTczMzkwOTU4OSwiaWF0IjoxNzMzODIzMTg5LCJyYnRfYW1vdW50IjoxLjA3NjU1LCJyZWNlaXZlcl9kaWQiOiJiYWZ5Ym1pYW8yZnlsenVwcHNyN2I3Y2VwbTMyZWdkNDY1dWhwbzNra3diaG5la3ZlNnUyYmVkd2IzbSJ9.Cqw_2pR2s27YeG1VVn0L4Oh8Hc4IsWsCOoNA8R4c4aE","status":"transaction amount exceeds 3 decimal places"}
+{"did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","jwt":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOiJiYWZ5Ym1pZmVicWx2cTJ1ZXR4bzNtZ3J3dWdmM2s0cmRqdXBvNmg2ZmtuN216cmI1ZWtoeHR0YW1ucSIsImV4cCI6MTczNTM2OTg2NCwiaWF0IjoxNzM1MjgzNDY0LCJyYnRfYW1vdW50IjoyLjU2MDg3LCJyZWNlaXZlcl9kaWQiOiJiYWZ5Ym1pYjN0dnFsbmIyNXVocGR3djJ5NHdiaHR0em1wd2RlbDNuYmxmb3UzdnU0dnp2N2IzYnlicSJ9.vxp0zGG-9jBFSDvLPz3Fv2JvJjAnsu27OxEEuMDTUEg","status":"transaction amount exceeds 3 decimal places"}
 ```
 
 
 ### Curl request to get all transactions by DID
 ```
-curl -X GET "http://localhost:8080/txn/by_did?did=<user DID>&role=<Sender/Receiver>&StartDate=<start of the date range>&EndDate=<end of the date range>"
+curl -L -X GET "http://localhost:8080/txn/by_did?did=<user DID>&role=<Sender/Receiver>&StartDate=<start of the date range>&EndDate=<end of the date range>" -H 'Authorization: Bearer <jwt token returned while logging in>'
 
 ```
 **Note** : either provide role of the did or else date range to filter the Txns list
 
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/txn/by_did?did=bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m&role=sender"
+curl -L -X GET "http://localhost:8080/txn/by_did?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&role=sender" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
-{"TxnDetails":[{"Amount":1,"BlockID":"1-bf67e28f41df5d8bc06e7753a498adef98e79aafae9b23cde6f80960bc39d84c","Comment":"","DateTime":"2024-12-10T11:00:36.290045784+05:30","DeployerDID":"","Epoch":1733808632,"Mode":0,"ReceiverDID":"bafybmiao2fylzuppsr7b7cepm32egd465uhpo3kkwbhnekve6u2bedwb3m","SenderDID":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq","Status":true,"TotalTime":3507,"TransactionID":"2df77ca20e0fc5ebf9cd6dea1e18679113a67a5874805d6a89ac239c004157ad","TransactionType":"02"},{"Amount":1.4,"BlockID":"1-f6856fafc6b1ed156cc0006470f5d54614f8cc547b1606f4a3a90bc9132976fd","Comment":"","DateTime":"2024-12-10T11:02:57.115731527+05:30","DeployerDID":"","Epoch":1733808774,"Mode":0,"ReceiverDID":"bafybmiao2fylzuppsr7b7cepm32egd465uhpo3kkwbhnekve6u2bedwb3m","SenderDID":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq","Status":true,"TotalTime":2805,"TransactionID":"7d8f02a3aff5b9c411bbf3a696ff3067581797f1d43a66a09d0c684760ace7fe","TransactionType":"02"}],"message":"Retrieved Txn Details","result":"Successful","status":true}
+{"TxnDetails":[{"Amount":2.56,"BlockID":"1-20eeb4d491c1672295d364863bcda1c8f5fa3a589a35deea5ea8a28f78610c9b","Comment":"","DateTime":"2024-12-18T22:56:27.061097073+05:30","DeployerDID":"","Epoch":1734542783,"Mode":0,"ReceiverDID":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq","SenderDID":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","Status":true,"TotalTime":3827,"TransactionID":"8b8c1874d6dedca90d141464b51da089e1d0d82904a5e893aa155ca2746f20d0","TransactionType":"02"},{"Amount":2.56,"BlockID":"1-a7f2ab4ada088bedffc90aaabba14b22a52819a1991da7ac5cf9e034be018625","Comment":"","DateTime":"2024-12-27T12:39:41.362751158+05:30","DeployerDID":"","Epoch":1735283377,"Mode":0,"ReceiverDID":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq","SenderDID":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","Status":true,"TotalTime":3857,"TransactionID":"d881d09212ef568009a81d37abf9506bf52e7990790bd6bf47c4113a6777abcc","TransactionType":"02"}],"message":"Retrieved Txn Details","result":"Successful","status":true}
 ```
 #### sample with invalid request (invalid did)
 ```
-curl -X GET "http://localhost:8080/txn/by_did?did=bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dft&role=sender"
+curl -L -X GET "http://localhost:8080/txn/by_did?did=bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dft&role=sender" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
-{"error":"User not found"}
+{"error":"DID mismatch"}
 ```
 
 ### Curl request to create FT
 ```
-curl -X POST "http://localhost:8080/create_ft -d '{"did":"<rubix node DID>", "ft_count":<number of FTs in int>, "ft_name":"<ft name>", "token_count":<number of RBTs in int>}'
+curl -L -X POST "http://localhost:8080/create_ft -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<rubix node DID>", "ft_count":<number of FTs in int>, "ft_name":"<ft name>", "token_count":<number of RBTs in int>}'
 
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/create_ft -d '{
-    "did":"bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m",
+curl -L -X POST http://localhost:8080/create_ft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
+    "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
     "ft_name":"test1",
     "ft_count":10,
-    "token_count":1
+    "token_count":20
 }'
 ```
 **Response:**
@@ -251,8 +262,8 @@ curl -X POST http://localhost:8080/create_ft -d '{
 ```
 #### sample with invalid request (invalid input format to token_count)
 ```
-curl -X POST http://localhost:8080/create_ft -d '{
-    "did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq",
+curl -L -X POST http://localhost:8080/create_ft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
+    "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
     "ft_name":"test2",
     "ft_count":10,
     "token_count":0.3
@@ -265,15 +276,15 @@ curl -X POST http://localhost:8080/create_ft -d '{
 
 ### Curl request to transfer FT
 ```
-curl -X POST "http://localhost:8080/transfer_ft -d '{"sender":"<sender DID>", "receiver":<receiver DID>, "ft_count":<number of FTs in int>, "ft_name":"<ft name>", "creatorDID":<DID of FT creator>}'
+curl -L -X POST "http://localhost:8080/transfer_ft -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"sender":"<sender DID>", "receiver":<receiver DID>, "ft_count":<number of FTs in int>, "ft_name":"<ft name>", "creatorDID":<DID of FT creator>}'
 
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/transfer_ft -d '{
-    "sender":"bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m",
-    "receiver":"bafybmihtljjkvayu7iwjxzd4sfufywakdd3zymrgcnw7jnc3p6oltjzofe",
-    "creatorDID":"bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m",
+curl -L -X POST http://localhost:8080/transfer_ft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
+    "sender":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+    "receiver":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq",
+    "creatorDID":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
     "ft_name":"test1",
     "ft_count":2, 
     "quorum_type":2
@@ -281,11 +292,18 @@ curl -X POST http://localhost:8080/transfer_ft -d '{
 ```
 **Response:**
 ```
-"Test tokens generated successfully"
+"FT Transfer finished successfully in 2.655295048s with trnxid 541616722e6d2d005d503de53ccc0e888a673de79697005e9bf90198f1bfac6d"
 ```
-#### sample with invalid request (invalid input format to number_of_tokens)
+#### sample with invalid request (invalid input format to ft_count)
 ```
-curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq", "number_of_tokens":1.0}'
+curl -L -X POST http://localhost:8080/transfer_ft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
+    "sender":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+    "receiver":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq",
+    "creatorDID":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
+    "ft_name":"test1",
+    "ft_count":2.7, 
+    "quorum_type":2
+}'
 ```
 **Response:**
 ```
@@ -294,59 +312,59 @@ curl -X POST http://localhost:8080/testrbt/create -d '{"did":"bafybmic6olksvxucq
 
 ### Curl request to get all FTs' info
 ```
-curl -X GET "http://localhost:8080/get_all_ft?did=<user DID>"
+curl -L -X GET "http://localhost:8080/get_all_ft?did=<user DID>" -H 'Authorization: Bearer <jwt token returned while logging in>'
 
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/get_all_ft?did=bafybmihtljjkvayu7iwjxzd4sfufywakdd3zymrgcnw7jnc3p6oltjzofe"
+curl -L -X GET "http://localhost:8080/get_all_ft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' 
 ```
 **Response:**
 ```
-{"ft_info":[{"creator_did":"bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m","ft_count":2,"ft_name":"test1"}],"message":"Got FT info successfully","result":null,"status":true}
+{"ft_info":[{"creator_did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","ft_count":2,"ft_name":"test1"}],"message":"Got FT info successfully","result":null,"status":true}
 ```
 #### sample with invalid request (empty input to did)
 ```
-curl -X GET "http://localhost:8080/get_all_ft?did="
+curl -L -X GET "http://localhost:8080/get_all_ft?did=" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' 
 ```
 **Response:**
 ```
-{"error":"Missing required parameters: did"}
+{"error":"Missing required parameter: did"}
 ```
 
 ### Curl request to get FT chain
 ```
-curl -X GET "http://localhost:8080/get_ft_chain?did=<user DID>&tokenID=<FT token ID>"
+curl -L -X GET "http://localhost:8080/get_ft_chain?did=<user DID>&tokenID=<FT token ID>" -H 'Authorization: Bearer <jwt token returned while logging in>'
 
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/get_ft_chain?did=bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m&tokenID="
+curl -L -X GET "http://localhost:8080/get_ft_chain?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&tokenID=QmbYuoWwTeW1WxM1WbZ53PGCVg5GLTQoqpuZzQ2LirxBN5" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
-{"TokenChainData":[{"TCBlockHashKey":"4d2c27b2910d74238511efad8aa554b00e0cb700743ed7e16ccf6dddecb54a1d","TCChildTokensKey":[],"TCGenesisBlockKey":{"GBInfoKey":{"QmX4DscAghtbwavd21qUm197tYSnfpw1ANBtVyhsxXxDjZ":{"GICommitedTokensKey":{},"GIParentIDKey":"QmQfLrqiX1TYKfBAntfqTimBnzmS4grmphMJsBy9KKYrT4","GITokenLevelKey":0,"GITokenNumberKey":1}},"GBTypeKey":""},"TCSignatureKey":{"bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m":"3045022100f8e4b21f24bb5b1b400fe4d9b8148a44fd010803c6404ea34335fed1b8fe29e202202e4467a8c22d0a999fa08ccd6f3b8e25f7a32e8b4e0047154ececfd356499e7e"},"TCTokenOwnerKey":"bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m","TCTokenValueKey":0.1,"TCTransInfoKey":{"TICommentKey":"FT generated at : 2024-12-17 18:38:42.559179681 +0530 IST m=+7928.990494248 for FT Name : test1","TITokensKey":{"QmX4DscAghtbwavd21qUm197tYSnfpw1ANBtVyhsxXxDjZ":{"TTBlockNumberKey":"0","TTPreviousBlockIDKey":"","TTTokenTypeKey":10}}},"TCTransTypeKey":"05"},{"TCBlockHashKey":"35ba03794d5093c59eafb601c7ecf44002ef2d948eb557d7dd08737aa59a05d7","TCChildTokensKey":[],"TCPledgeDetailsKey":{"bafybmiasnd2edbghz4qjhsaghc6g6ghd77slyu7zm75qfyjn6tlgojf6nu":[{"8-1":"QmfDFChvQRst7HGN85Ws4X5CdGEK7NtR2GJmKxXx9jrFYP","8-2":5,"8-3":"0-58ca8c778393777a1e10283724cc69614244b32bc3a293c7316222d73cfe4184"}],"bafybmicgivtxz2hnajemoqq2emw2zzpk6x7ecar3m7gvthhspqakur3lwi":[{"8-1":"QmWfjsr1RXct65dqe5gwz8xtJsUkrX9iwqp96psedMH1cm","8-2":5,"8-3":"0-6becc5961b5e0d03ddf834fabe19370486a1510027f3d457a1a17e7034b27bb2"}],"bafybmig4x5q3ym4z7e53pgdvjfxdqvwsgidfy3yuezdwiqwbbdheqvp6qy":[{"8-1":"QmVG9ViEMw7WgZnsEiUFB1f5VeN66bHbFvfm24LFoz8NZE","8-2":5,"8-3":"0-898fa433bbe6f8054373126ed66a3fdfde160dbe73cdf49c13d4658fc4bd6b5b"}],"bafybmig62a4wy2m6aiab22vsdfgbrkkx2o64yoj3r7blemazuenyhpcgye":[{"8-1":"QmRZUqj54iNSBmk1PspYG46n58CtHASfzp1vfcC2Yt1nei","8-2":5,"8-3":"0-c5ac28d184ac63d658e9556e4d3ecc9a5276d332ad8afecb30618af6624cb36a"}],"bafybmihjk2s5mkiusews26svgoz2xdfabzvh7r44bbz5jv4zkurkhbraay":[{"8-1":"QmTnhE3Ubn1pqZBQynSuJanLdkEsFLYx6V7iFawik3BvNk","8-2":5,"8-3":"0-ff40c79e0460ec65c028b554cc9b961bc9995ec8fa7af3de6246f71bb5a6e601"}]},"TCQuorumSignatureKey":[{"did":"bafybmihjk2s5mkiusews26svgoz2xdfabzvh7r44bbz5jv4zkurkhbraay","hash":"","priv_signature":"3046022100f0d86a587565d9a7215ad9a8ae6b8faf6e765e3c0cd377d59f0847ec44f8b0ae022100c998de4fbbf2947204c83e0595e39ebe7f16f148e14c7b1923fa3125486f76a1","sign_type":"0","signature":""},{"did":"bafybmiasnd2edbghz4qjhsaghc6g6ghd77slyu7zm75qfyjn6tlgojf6nu","hash":"","priv_signature":"3046022100b035ec5e1d0faf8bb005b6d86f982fd4d7753b317f82e50f166c4bdbbb5c31e2022100cdbbfc8a09e65658f765be85ed4019c70aee8ab50371c822077b323b1eefb3d7","sign_type":"0","signature":""},{"did":"bafybmig4x5q3ym4z7e53pgdvjfxdqvwsgidfy3yuezdwiqwbbdheqvp6qy","hash":"","priv_signature":"304502207296ddd62b6a5f718ed4527d827e0d7cd7ea3fb325561696d32851cb10b62a9f022100b6b84f2160a3b27027702cc7c3dff0f25cbd74b0033b296f3c8dace45fcfb742","sign_type":"0","signature":""},{"did":"bafybmicgivtxz2hnajemoqq2emw2zzpk6x7ecar3m7gvthhspqakur3lwi","hash":"","priv_signature":"304502207cf27e366ae6d21404f263bc7bedb028110b0275e16a9fa59a793439fa1b8ec5022100ae60ee4637fa1b2f2b0f05a6d1e00bcd89854248b4e5a97ac1de68c2c8528e73","sign_type":"0","signature":""},{"did":"bafybmig62a4wy2m6aiab22vsdfgbrkkx2o64yoj3r7blemazuenyhpcgye","hash":"","priv_signature":"304402200116878a467fb28c43ce1464afeb6c07fe7aa5a43fe49c3819584544908745db02207399853e65d4aebca9c21f592a950c13f34f5283cb07497b0d300f96dc4012e0","sign_type":"0","signature":""}],"TCSenderSignatureKey":{"InitiatorDID":"bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m","hash":"2528205ee902d5e537cfb6694ce017931a1cdd6be07e7af2867c803937dc5bb8","nlss_share_signature":"","priv_signature":"304402202fe718ca168deb42817cce1c758625a96e0f81c8a9d38a31ea874696f5a9cfef022003319304e31a81b5bb05f240f552869c48caf457e7be2d82c0306c0f832303c1","sign_type":0},"TCSignatureKey":{"bafybmiasnd2edbghz4qjhsaghc6g6ghd77slyu7zm75qfyjn6tlgojf6nu":"3046022100d3fd3e513e9771f1db516bbd1062fa701532ea2e215f7224995f311ae7707904022100e8d7f6b9860627264d4f2f98e64427fcf1d22034eaa06929535a9ba0d733f85d","bafybmicgivtxz2hnajemoqq2emw2zzpk6x7ecar3m7gvthhspqakur3lwi":"3045022100a73b38829ae5339acb97342e7574088c11acbc4fe0cec7d172dfa9316dbdb13402206f30a77d5e705bb113f1080e43e84789660b45992c4cff238951aed975774f55","bafybmig4x5q3ym4z7e53pgdvjfxdqvwsgidfy3yuezdwiqwbbdheqvp6qy":"3045022100fd624389e98704ff0b7552997d2d119479540551b8921e7b506aa5079ff1632902206fcb1427d068eb8ee8cd592b959bb36ce11cd0b1d531270f8d4910d9ab7f6900","bafybmig62a4wy2m6aiab22vsdfgbrkkx2o64yoj3r7blemazuenyhpcgye":"30450221008e5a0a891f39b097fd20053b47890cddab10b884107ab5233dd671d75b4d9e41022058cd50ac3b8916738198dd292c9779ecdb327bd1c01db1d59089fac8027729ab","bafybmihjk2s5mkiusews26svgoz2xdfabzvh7r44bbz5jv4zkurkhbraay":"3046022100cfa26754467283fabdd41520a59875442e6f71a654121983f6c5ea5c332a6d01022100aa78b089ec7b6d3d5c1a8e03393b0fdf8ebca53148bab1df0435eb6ebc1575c7"},"TCSmartContractKey":"a36131590218a46131086132006133a36131783b62616679626d696873617337657263773275706b7571356d70713278726175777963786b657336707878796a3532696a667837736777737172366d6132783b62616679626d6968746c6a6a6b766179753769776a787a6434736675667977616b6464337a796d7267636e77376a6e633370366f6c746a7a6f66656134a2782e516d57734c6a76424a6d32426f7375374176596a64517167347156464b6a4d6d4a36434c4b78767a454431334243a461310a6132783b62616679626d696873617337657263773275706b7571356d70713278726175777963786b657336707878796a3532696a667837736777737172366d61337842302d646536336464386237626536363434616634373931373061626365353733343539383336666235363164666366323065366130616638326131613738613661316134fb3fb999999999999a782e516d5834447363416768746277617664323171556d3139377459536e66707731414e427456796873785878446a5aa461310a6132783b62616679626d696873617337657263773275706b7571356d70713278726175777963786b657336707878796a3532696a667837736777737172366d61337842302d346432633237623239313064373432333835313165666164386161353534623030653063623730303734336564376531366363663664646465636235346131646134fb3fb999999999999a6134f900006132583fa1783b62616679626d696873617337657263773275706b7571356d70713278726175777963786b657336707878796a3532696a667837736777737172366d60613358cca1783b62616679626d696873617337657263773275706b7571356d70713278726175777963786b657336707878796a3532696a667837736777737172366d788c3330343430323230326665373138636131363864656234323831376363653163373538363235613936653066383163386139643338613331656138373436393666356139636665663032323030333331393330346533316138316235626230356632343066353532383639633438636166343537653762653264383263303330366330663833323330336331","TCTokenOwnerKey":"bafybmihtljjkvayu7iwjxzd4sfufywakdd3zymrgcnw7jnc3p6oltjzofe","TCTransInfoKey":{"TIReceiverDIDKey":"bafybmihtljjkvayu7iwjxzd4sfufywakdd3zymrgcnw7jnc3p6oltjzofe","TISenderDIDKey":"bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m","TITIDKey":"db6d7fb432725708f5d17a1026697965c2354fd91430dd2655e94c3dda424a54","TITokensKey":{"QmWsLjvBJm2Bosu7AvYjdQqg4qVFKjMmJ6CLKxvzED13BC":{"TTBlockNumberKey":"1","TTPreviousBlockIDKey":"0-de63dd8b7be6644af479170abce573459836fb561dfcf20e6a0af82a1a78a6a1","TTTokenTypeKey":10},"QmX4DscAghtbwavd21qUm197tYSnfpw1ANBtVyhsxXxDjZ":{"TTBlockNumberKey":"1","TTPreviousBlockIDKey":"0-4d2c27b2910d74238511efad8aa554b00e0cb700743ed7e16ccf6dddecb54a1d","TTTokenTypeKey":10}}},"TCTransTypeKey":"02"}],"message":"FT tokenchain data fetched successfully","result":null,"status":true}
+{"TokenChainData":[{"TCBlockHashKey":"15018823c0d5b8a9a37dfb867c0f9ac32724dad8ef163c4fad9f3fc4c9af9482","TCChildTokensKey":[],"TCGenesisBlockKey":{"GBInfoKey":{"QmbYuoWwTeW1WxM1WbZ53PGCVg5GLTQoqpuZzQ2LirxBN5":{"GICommitedTokensKey":{},"GIParentIDKey":"QmRzrio1rexNo28BP66kbfqsNu9GcN9yTBFmzG5weLSduk,QmbiFvLnb328d7xbjJTgTPFvUSyAnk2gKD9pTH76mHRbgB,QmQZfVkMkBz5ccTiTJySxNanAkh8MdfcKP7m4cnuDKzYSD,QmSs9nDgT9tc52Zuto57gbHqhYexT2hWyCTFCRpWUQ2V9X,QmSxeigeWrgz8BnS7GaZtHabi2eLnyStabKqycqD2YyLWu,QmeutGzLeHqYNn1RuuDPcN9VzaoQw7SXkAYkNLs7TjQ9Wu,QmZ41UGzmvaGWofKxXiC1TegLzwjzpdRgqTATjYxQAejfD,QmYDC7QDhn8njpcwcLxmAj2kAVMBTxA2oep4MTyEemo4Qn,QmY9aBhDd1SdTEAoYuxUYUTHYN85w2JwDe9DN7MUpP2hsj,QmfC56fsRvZNFq77dQo2GDxPaAeCKBFZRzQPUe8iE1y2WU,QmdV8zr3h1xvLfmS3vkwrnripaPZZaHmGT5xxdDbVxqrmP,QmTpsNvJbGNUmBmGKA2Msq8chSTWMotkkygrEWuumNTwLX,QmfWJr92RX2gFzURVrnC7aNsoZ9EemzZQnzRYTDgBHS7qq,QmeSRrAQz1kwdcuakQd4kqy6DriuyLQzQQkkGFqysx1VXp,QmVTEHtvuao3qUwByUq9xxhtKqiJCuzoSMtu5zwSUGAB8H,QmabGK4aLcJRdFtxWUfPXKZLBsDyD7qd63yJ2jnqirLqAM,QmZCJ18o47fjQSUYv2szw9UggiKA4rNvdKBU7BsovbxBbF,QmeaaFGNboc8o35qs97RskimQcg1Rgr7qEUP5hZhobHAHZ,QmWyrYXWT4tPw8mFDvq6BXhEJAU1zsK8Q43sarKw7FezhS,QmVWasLh6XkV9vAVoDu9c2VnPoajdbr4EYvq7mhVEoNXQw","GITokenLevelKey":0,"GITokenNumberKey":8}},"GBTypeKey":""},"TCSignatureKey":{"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq":"30440220522ef06cf088dcb00f60a647cf37580f30e7e544e6d8bf0b978a20459ba4e9f6022066847083ab1e44f82d811919ab7d1c1c20f406d7be46955efb2b6d29192e8ba6"},"TCTokenOwnerKey":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","TCTokenValueKey":2,"TCTransInfoKey":{"TICommentKey":"FT generated at : 2024-12-27 12:45:20.791553358 +0530 IST m=+3096.910633743 for FT Name : test1","TITokensKey":{"QmbYuoWwTeW1WxM1WbZ53PGCVg5GLTQoqpuZzQ2LirxBN5":{"TTBlockNumberKey":"0","TTPreviousBlockIDKey":"","TTTokenTypeKey":10}}},"TCTransTypeKey":"05"}],"message":"FT tokenchain data fetched successfully","result":null,"status":true}
 ```
 #### sample with invalid request (empty input to tokenID)
 ```
-curl -X GET "http://localhost:8080/get_ft_chain?did=bafybmihsas7ercw2upkuq5mpq2xrauwycxkes6pxxyj52ijfx7sgwsqr6m&tokenID="
+curl -L -X GET "http://localhost:8080/get_ft_chain?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&tokenID="  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
-{"error":"Missing required parameters: tokenID"}
+{"error":"Missing required parameter: tokenID"}
 ```
 
 ### Curl request to create NFT
 ```
-curl -X POST "http://localhost:8080/create_nft -d '{"did":"<rubix node DID>", "metadata":<metadata file path>, "artifact":"<artifact file path>"}'
+curl -L -X POST "http://localhost:8080/create_nft -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<rubix node DID>", "metadata":<metadata file path>, "artifact":"<artifact file path>"}'
 
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/create_nft -d '{
+curl -L -X POST http://localhost:8080/create_nft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
     "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
     "metadata":"/home/maneesha/Rubix-Git/NFT/metadata.json",
-    "artifact":"/home/maneesha/Rubix-Git/NFT/image.png"
+    "artifact":"/home/maneesha/Rubix-Git/NFT/test2.png"
 }'
 ```
 **Response:**
@@ -355,27 +373,27 @@ curl -X POST http://localhost:8080/create_nft -d '{
 ```
 #### sample with invalid request (invalid input path to artifact)
 ```
-curl -X POST http://localhost:8080/create_nft -d '{
+curl -L -X POST http://localhost:8080/create_nft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
     "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
     "metadata":"/home/maneesha/Rubix-Git/NFT/metadata.json",
-    "artifact":"/home/maneesha/Rubix-Git/test.png"
+    "artifact":"/home/maneesha/Rubix-Git/test2.png"
 }'
 ```
 **Response:**
 ```
-{"error":"open /home/maneesha/Rubix-Git/test.png: no such file or directory"}
+{"error":"open /home/maneesha/Rubix-Git/test2.png: no such file or directory"}
 ```
 
 ### Curl request to subscribe NFT
 ```
-curl -X POST "http://localhost:8080/subscribe_nft -d '{"did":"<rubix node DID>", "nft":<nft token ID>}'
+curl -L -X POST "http://localhost:8080/subscribe_nft -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<rubix node DID>", "nft":<nft token ID>}'
 
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/subscribe_nft -d '{
-    "did":"bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu",
-    "nft":"QmPCe9otZasFkDx21jkmuQ351CkefgeMHNCwDnv3QSTXkw"
+curl -L -X POST http://localhost:8080/subscribe_nft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1Mzk2NzYsInN1YiI6ImJhZnlibWliM3R2cWxuYjI1dWhwZHd2Mnk0d2JodHR6bXB3ZGVsM25ibGZvdTN2dTR2enY3YjNieWJxIn0.eMTEEtErNj4I7_MfO-0PiP2djnVz1rMZtAkCF3Hpbs8' -d '{
+    "did":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq",
+    "nft":"Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9ecDA"
 }'
 ```
 **Response:**
@@ -384,38 +402,38 @@ curl -X POST http://localhost:8080/subscribe_nft -d '{
 ```
 #### sample with invalid request (invalid input to did)
 ```
-curl -X POST http://localhost:8080/subscribe_nft -d '{
+curl -L -X POST http://localhost:8080/subscribe_nft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1Mzk2NzYsInN1YiI6ImJhZnlibWliM3R2cWxuYjI1dWhwZHd2Mnk0d2JodHR6bXB3ZGVsM25ibGZvdTN2dTR2enY3YjNieWJxIn0.eMTEEtErNj4I7_MfO-0PiP2djnVz1rMZtAkCF3Hpbs8' -d '{
     "did":"",
-    "nft":"QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY"
+    "nft":"Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9ecDA"
 }'
 ```
 **Response:**
 ```
-{"error":"User not found"}
+{"error":"DID mismatch"}
 ```
 
 ### Curl request to deploy NFT
 ```
-curl -X POST "http://localhost:8080/deploy_nft -d '{"did":"<rubix node DID>", "nft":"<nft ID>", "quorum_type":<1 or 2>}'
+curl -L -X POST "http://localhost:8080/deploy_nft -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<rubix node DID>", "nft":"<nft ID>", "quorum_type":<1 or 2>}'
 
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/deploy_nft -d '{
+curl -L -X POST http://localhost:8080/deploy_nft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
     "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
-    "nft":"QmPCe9otZasFkDx21jkmuQ351CkefgeMHNCwDnv3QSTXkw",
+    "nft":"Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9ecDA",
     "quorum_type":2
 }'
 ```
 **Response:**
 ```
-"NFT Token generated successfully"
+"NFT Deployed successfully in 2.315930416s"
 ```
 #### sample with invalid request (invalid input to quorum_type)
 ```
-curl -X POST http://localhost:8080/deploy_nft -d '{
+curl -L -X POST http://localhost:8080/deploy_nft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
     "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
-    "nft":"QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY",
+    "nft":"Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9ecDA",
     "quorum_type":4
 }'
 ```
@@ -426,7 +444,7 @@ curl -X POST http://localhost:8080/deploy_nft -d '{
 
 ### Curl request to execute NFT
 ```
-curl -X POST http://localhost:8080/execute_nft -d '{
+curl -L -X POST http://localhost:8080/execute_nft -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{
   "comment": "string",
   "nft": "string",
   "nft_data": "string",
@@ -439,30 +457,30 @@ curl -X POST http://localhost:8080/execute_nft -d '{
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/execute_nft -d '{
+curl -L -X POST http://localhost:8080/execute_nft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
   "comment": "nft transfer from wallet",
-  "nft": "QmPCe9otZasFkDx21jkmuQ351CkefgeMHNCwDnv3QSTXkw",
+  "nft": "Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9ecDA",
   "nft_data": "",
-  "nft_value": 19.0,
-  "owner": "bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq",
+  "nft_value": 11.0,
+  "owner": "bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
   "quorum_type": 2,
-  "receiver": "bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq"
+  "receiver": "bafybmibuj72pm5x6yjhmfgacfusbk5veur5poqfm7qibk45kk5ktiep3d4"
 }'
 ```
 **Response:**
 ```
 "NFT Executed successfully in 2.281952715s"
 ```
-#### sample with invalid request (invalid input )
+#### sample with invalid request (invalid owner)
 ```
-curl -X POST http://localhost:8080/execute_nft -d '{
+curl -L -X POST http://localhost:8080/execute_nft -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0' -d '{
   "comment": "nft transfer from wallet",
-  "nft": "QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfijY",
+  "nft": "Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9ecDA",
   "nft_data": "",
-  "nft_value": 5,
-  "owner": "bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq",
+  "nft_value": 11.0,
+  "owner": "bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
   "quorum_type": 2,
-  "receiver": "bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu"
+  "receiver": "bafybmibuj72pm5x6yjhmfgacfusbk5veur5poqfm7qibk45kk5ktiep3d4"
 }'
 ```
 **Response:**
@@ -472,45 +490,41 @@ curl -X POST http://localhost:8080/execute_nft -d '{
 
 ### Curl request to fetch NFT
 ```
-curl -X GET "http://localhost:8080/get_nft?did=<string>&nft=<string>"
+curl -L -X GET "http://localhost:8080/get_nft?did=<string>&nft=<string>" -H 'Authorization: Bearer <jwt token returned while logging in>'
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/get_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&nft=QmT5EMvrozZWyQZsX6UpBR9muoAfjmbBqEHdUzWsRNw1jr"
+curl -L -X GET "http://localhost:8080/get_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&nft=Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9ecDA" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
 {"message":"NFT fetched successfully","result":null,"status":true}
 ```
-#### sample with invalid request (invalid input path to artifact)
+#### sample with invalid request (invalid did)
 ```
-curl -X POST http://localhost:8080/create_nft -d '{
-    "did":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq",
-    "metadata":"/home/maneesha/Rubix-Git/NFT/metadata.json",
-    "artifact":"/home/maneesha/Rubix-Git/test.png"
-}'
+curl -L -X GET "http://localhost:8080/get_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamhj&nft=Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9echy" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
-{"error":"open /home/maneesha/Rubix-Git/test.png: no such file or directory"}
+{"error":"DID mismatch"}
 ```
 
 ### Curl request to get NFT chain
 ```
-curl -X GET "http://localhost:8080/get_nft_chain?did=<string>&nft=<string>&latest=<string>"
+curl -L -X GET "http://localhost:8080/get_nft_chain?did=<string>&nft=<string>&latest=<string>" -H 'Authorization: Bearer <jwt token returned while logging in>'
 
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/get_nft_chain?did=bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq&nft=QmT5EMvrozZWyQZsX6UpBR9muoAfjmbBqEHdUzWsRNw1jr"
+curl -L -X GET "http://localhost:8080/get_nft_chain?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&nft=Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9ecDA" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
-{"NFTDataReply":[{"BlockId":"1-04886a33a4a69f18cd10d6e878edfa6b6dcdc2f354db07e79a64393008707975","BlockNo":1,"NFTData":"","NFTOwner":"bafybmib3tvqlnb25uhpdwv2y4wbhttzmpwdel3nblfou3vu4vzv7b3bybq","NFTValue":10}],"message":"Fetched latest block details of nft","result":null,"status":true}
+{"NFTDataReply":[{"BlockId":"0-82227efb89892902326ccdda6422cd8a2247c037749fff6a5c181deaf6602936","BlockNo":0,"NFTData":"","NFTOwner":"bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq","NFTValue":0},{"BlockId":"1-98baffa792c3bf87759ee19608c23f8c6afeb471f59f0a7911a971959ab7b81b","BlockNo":1,"NFTData":"","NFTOwner":"bafybmibuj72pm5x6yjhmfgacfusbk5veur5poqfm7qibk45kk5ktiep3d4","NFTValue":11}],"message":"Fetched NFT data","result":null,"status":true}
 ```
 #### sample with invalid request (invalid input to nft)
 ```
-curl -X GET "http://localhost:8080/get_nft_chain?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&nft=QmSYAeRRoxurxEpraDGu4B9fUn38VP7vXBoxzZqQnmfikj"
+curl -L -X GET "http://localhost:8080/get_nft_chain?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq&nft=Qme4NFXJ7f3f4umwbjL7A6ps2udw8WdcCz5cYWG2w9echj" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
@@ -519,12 +533,12 @@ curl -X GET "http://localhost:8080/get_nft_chain?did=bafybmifebqlvq2uetxo3mgrwug
 
 ### Curl request to get all NFTs
 ```
-curl -X GET "http://localhost:8080/get_all_nft?did=<string>"
+curl -L -X GET "http://localhost:8080/get_all_nft?did=<string>" -H 'Authorization: Bearer <jwt token returned while logging in>'
 
 ```
 #### sample with valid request 
 ```
-curl -X GET "http://localhost:8080/get_all_nft?did=bafybmia3zyr73srf5jnm3xuvuetepn5alh53wbtw6ep4pnojey6emtwcmu"
+curl -L -X GET "http://localhost:8080/get_all_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
@@ -532,9 +546,9 @@ curl -X GET "http://localhost:8080/get_all_nft?did=bafybmia3zyr73srf5jnm3xuvuete
 ```
 #### sample with invalid request (invalid input to did)
 ```
-curl -X GET "http://localhost:8080/get_all_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamjh"
+curl -L -X GET "http://localhost:8080/get_all_nft?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttaghh" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
 ```
 **Response:**
 ```
-{"error":"User not found"}
+{"error":"DID mismatch"}
 ```
