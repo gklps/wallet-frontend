@@ -135,11 +135,11 @@ curl -L -X GET "http://localhost:8080/request_balance?did=<user DID>" -H 'Author
 ```
 #### sample with valid request 
 ```
-curl -L -X GET "http://localhost:8080/request_balance?did=bafybmifebqlvq2uetxo3mgrwugf3k4rdjupo6h6fkn7mzrb5ekhxttamnq" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NDIzMjksInN1YiI6ImJhZnlibWlmZWJxbHZxMnVldHhvM21ncnd1Z2YzazRyZGp1cG82aDZma243bXpyYjVla2h4dHRhbW5xIn0.Kii2kW5CTkdV7IjNjkaYiXTP40rYXlj7UcUWxmSxfm0'
+curl -L -X GET "http://localhost:8080/request_balance?did=bafybmigfq7dnhqdpghluqfirvn5yz76vpvrkutofswih7sidmqmssohvbq" -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU4MTY2NTAsInN1YiI6ImJhZnlibWlnZnE3ZG5ocWRwZ2hsdXFmaXJ2bjV5ejc2dnB2cmt1dG9mc3dpaDdzaWRtcW1zc29odmJxIn0.c3CFWttRFrm3KKlCi8uazISOekI_T1PvV9jLsObREqE'
 ```
 **Response:**
 ```
-{"account_info":[{"did":"bafybmic6olksvxucqrxfbwqptyshu5tahprawhnipemihj7opfccpk2dbq","did_type":0,"locked_rbt":0,"pinned_rbt":0,"pledged_rbt":0,"rbt_amount":9.6}],"message":"Got account info successfully","result":null,"status":true}
+{"account_info":[{"did":"bafybmigfq7dnhqdpghluqfirvn5yz76vpvrkutofswih7sidmqmssohvbq","did_type":0,"locked_rbt":0,"pinned_rbt":0,"pledged_rbt":14.824,"rbt_amount":5.176}],"message":"Got account info successfully","result":null,"status":true}
 ```
 #### sample with invalid request (empty input to did)
 ```
@@ -156,13 +156,13 @@ curl -L -X GET "http://localhost:8080/request_balance?did=" -H 'Authorization: B
 curl -L -X POST http://localhost:8080/rbt/unpledge -H 'Authorization: Bearer <jwt token returned while logging in>' -d '{"did":"<user DID>"}'
 
 ```
-#### sample with valid request (pending)
+#### sample with valid request
 ```
-curl -L -X POST http://localhost:8080/rbt/unpledge -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NTAzNTQsInN1YiI6ImJhZnlibWlnZnE3ZG5ocWRwZ2hsdXFmaXJ2bjV5ejc2dnB2cmt1dG9mc3dpaDdzaWRtcW1zc29odmJxIn0.nmgjyGxALW-ecfmBiZMaBEWhdx4P_qLkiE-y9Zgy6Tc' -d '{"did":"bafybmigfq7dnhqdpghluqfirvn5yz76vpvrkutofswih7sidmqmssohvbq"}'
+curl -L -X POST http://localhost:8080/rbt/unpledge -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU4MTY2NTAsInN1YiI6ImJhZnlibWlnZnE3ZG5ocWRwZ2hsdXFmaXJ2bjV5ejc2dnB2cmt1dG9mc3dpaDdzaWRtcW1zc29odmJxIn0.c3CFWttRFrm3KKlCi8uazISOekI_T1PvV9jLsObREqE' -d '{"did":"bafybmigfq7dnhqdpghluqfirvn5yz76vpvrkutofswih7sidmqmssohvbq"}'
 ```
 **Response:**
 ```
-"Unpledging of pledged tokens was successful, Total Unpledge Amount: 2.4400000000000004 RBT"
+"Unpledging of pledged tokens was successful, Total Unpledge Amount: 5.402 RBT"
 ```
 #### sample with invalid request (invalid did)
 ```
