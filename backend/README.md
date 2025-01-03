@@ -10,23 +10,23 @@ go run wallet.go
 
 ### Curl request to create a new user
 ```
-curl -X POST http://localhost:8080/create -d '{"email":"<email id>","password":"<password>","name":<user name>}'
+curl -X POST http://localhost:8080/create -d '{"email":"<email id>","password":"<password>","name":"<user name>"}'
 ```
 #### sample with valid request 
 ```
-curl -X POST http://localhost:8080/create -d '{"email":"jiya@p.com","password":"123","name":jiya}'
+curl -X POST http://localhost:8080/create -d '{"email":"jiya@p.com","password":"123","name":"jiya"}'
 ```
 **Response:**
 ```
 {"did":"bafybmie5l4jpfxmnnqi3sk4vnt6fx3sbuzf632ubeflc7let6rljzq4usi"}
 ```
-#### sample with invalid request (invalid port)
+#### sample with invalid request (invalid input format to name)
 ```
-curl -X POST http://localhost:8080/create_wallet -d '{"port":20001}'
+curl -X POST http://localhost:8080/create -d '{"email":"jiya@p.com","password":"123","name":jiya}'
 ```
 **Response:**
 ```
-{"error":"Failed to request DID"}
+{"error":"Invalid request"}
 ```
 
 
