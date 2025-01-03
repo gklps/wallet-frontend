@@ -8,9 +8,31 @@ go run wallet.go
 
 ```
 
+### Curl request to create a new user
+```
+curl -X POST http://localhost:8080/create -d '{"email":"<email id>","password":"<password>","name":<user name>}'
+```
+#### sample with valid request 
+```
+curl -X POST http://localhost:8080/create -d '{"email":"jiya@p.com","password":"123","name":jiya}'
+```
+**Response:**
+```
+{"did":"bafybmie5l4jpfxmnnqi3sk4vnt6fx3sbuzf632ubeflc7let6rljzq4usi"}
+```
+#### sample with invalid request (invalid port)
+```
+curl -X POST http://localhost:8080/create_wallet -d '{"port":20001}'
+```
+**Response:**
+```
+{"error":"Failed to request DID"}
+```
+
+
 ### Curl request to login
 ```
-curl -X POST http://localhost:8080/login -d '{"email":"riya@gmail.com","password":"123"}'
+curl -X POST http://localhost:8080/login -d '{"email":"<email id>","password":"<password>"}'
 ``` 
 
 ### Curl request to view profile
