@@ -296,7 +296,7 @@ func createUserHandler(c *gin.Context) {
 	}
 
 	// Create the wallet and fetch the DID
-	walletRequest := `{"port": 20013}`
+	walletRequest := `{"port": 20000}`
 	resp, err := http.Post("http://localhost:8080/create_wallet", "application/json", bytes.NewBuffer([]byte(walletRequest)))
 	if err != nil {
 		log.Printf("Error calling /create_wallet: %v", err)
@@ -505,7 +505,9 @@ func VerifyToken(tokenString string, publicKey *ecdsa.PublicKey) (bool, jwt.MapC
 func createWalletHandler(c *gin.Context) {
 	var req DIDRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input, " + err.Error()})
+		// Add a newline to the response body
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -517,7 +519,9 @@ func createWalletHandler(c *gin.Context) {
 	// Request user DID from Rubix node
 	did, pubKeyStr, err := didRequest(publicKey, strconv.Itoa(req.Port))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to request DID"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid request, " + err.Error()})
+		// Add a newline to the response body
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -526,6 +530,8 @@ func createWalletHandler(c *gin.Context) {
 	reconstructedPubKey, _ := secp256k1.ParsePubKey(pubKeyBytes)
 	if !publicKey.IsEqual(reconstructedPubKey) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Public key mismatch \n"})
+		// Add a newline to the response body
+		c.Writer.Write([]byte("\n"))
 		return
 	}
 
@@ -533,15 +539,15 @@ func createWalletHandler(c *gin.Context) {
 	privKeyStr := hex.EncodeToString(privateKey.Serialize())
 	err = storage.InsertUser(did, pubKeyStr, privKeyStr, mnemonic, req.Port)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store user data" + err.Error()})
-		// Add a newline to the response body if required
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store user data, " + err.Error()})
+		// Add a newline to the response body
 		c.Writer.Write([]byte("\n"))
 		return
 	}
 
 	// Respond with DID
 	c.JSON(http.StatusOK, gin.H{"did": did})
-	// Add a newline to the response body if required
+	// Add a newline to the response body
 	c.Writer.Write([]byte("\n"))
 }
 
@@ -1186,7 +1192,7 @@ func didRequest(pubkey *secp256k1.PublicKey, rubixNodePort string) (string, stri
 	}
 
 	url := fmt.Sprintf("http://localhost:%s/api/request-did-for-pubkey", rubixNodePort)
-	req, err := http.NewRequest("GET", url, bytes.NewBuffer(bodyJSON))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyJSON))
 	if err != nil {
 		fmt.Println("Error creating HTTP request:", err)
 		return "", "", err
