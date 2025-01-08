@@ -188,6 +188,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.DIDPeerMap'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -252,6 +257,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.CreateFTRequest'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -286,6 +296,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.CreateNFTRequest'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -352,6 +367,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.DeployNFTRequest'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -386,6 +406,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.ExecuteNFTRequest'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -417,6 +442,11 @@ paths:
       - description: DID of the user
         in: query
         name: did
+        required: true
+        type: string
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
         required: true
         type: string
       produces:
@@ -451,6 +481,11 @@ paths:
         name: did
         required: true
         type: string
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -481,6 +516,11 @@ paths:
       - description: Token ID
         in: query
         name: tokenID
+        required: true
+        type: string
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
         required: true
         type: string
       produces:
@@ -515,6 +555,11 @@ paths:
         name: nft
         required: true
         type: string
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -545,6 +590,11 @@ paths:
       - description: NFT ID
         in: query
         name: nft
+        required: true
+        type: string
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
         required: true
         type: string
       produces:
@@ -603,6 +653,12 @@ paths:
       consumes:
       - application/json
       description: Fetch user information from the database using the JWT token
+      parameters:
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -631,6 +687,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.ReqToRubixNode'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -665,6 +726,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.ReqToRubixNode'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -696,6 +762,11 @@ paths:
       - description: DID of the user
         in: query
         name: did
+        required: true
+        type: string
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
         required: true
         type: string
       produces:
@@ -731,6 +802,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.TxnRequest'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -764,6 +840,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.ReqToRubixNode'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -830,6 +911,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.SubscribeNFTRequest'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -864,6 +950,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.GenerateTestRBTRequest'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -898,6 +989,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/main.TransferFTReq'
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -942,6 +1038,11 @@ paths:
       - description: End date for filtering transactions
         in: query
         name: endDate
+        type: string
+      - description: Authorization token (Bearer <your_token>)
+        in: header
+        name: Authorization
+        required: true
         type: string
       produces:
       - application/json

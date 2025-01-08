@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -230,6 +231,20 @@ func main() {
 	r.Run(":8080")
 }
 
+var portCounter = 20000
+
+func getNextPort() int {
+	defer func() { portCounter++ }()
+	return portCounter
+}
+
+// check if node is running
+func checkPort(port int) bool {
+	address := fmt.Sprintf("localhost:%d", port)
+	_, err := net.Dial("tcp", address)
+	return err == nil
+}
+
 // Login handler to authenticate users and issue JWT
 // @Summary Login user and get JWT token
 // @Description Authenticate user and return a JWT token
@@ -306,8 +321,17 @@ func createUserHandler(c *gin.Context) {
 		return
 	}
 
+	// Increment the port counter for each new user, until a running port is found
+	var port int
+	for {
+		port = getNextPort()
+		if checkPort(port) {
+			break
+		}
+	}
+
 	// Create the wallet and fetch the DID
-	walletRequest := `{"port": 20000}`
+	walletRequest := `{"port":` + strconv.Itoa(port) + `}`
 	resp, err := http.Post("http://localhost:8080/create_wallet", "application/json", bytes.NewBuffer([]byte(walletRequest)))
 	if err != nil {
 		log.Printf("Error calling /create_wallet: %v", err)
@@ -418,6 +442,7 @@ func authenticate(c *gin.Context) {
 // @Success 200 {object} User
 // @Failure 500 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /profile [get]
 func profileHandler(c *gin.Context) {
 	// Extract the DID from the token
@@ -581,6 +606,7 @@ func createWalletHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /register_did [post]
 func registerDIDHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -659,6 +685,7 @@ func registerDIDHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /setup_quorum [post]
 func setupQuorumHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -788,6 +815,7 @@ func setupQuorumRequest(did string, rubixNodePort string) (string, error) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /add_peer [post]
 func addPeerHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -959,6 +987,7 @@ func signTransactionHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /request_txn [post]
 func requestTransactionHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -1045,6 +1074,7 @@ func requestTransactionHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /request_balance [get]
 func requestBalanceHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -1121,6 +1151,7 @@ func requestBalanceHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /testrbt/create [post]
 func createTestRBTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -1203,6 +1234,7 @@ func createTestRBTHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /txn/by_did [get]
 func getTxnByDIDHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -1574,6 +1606,7 @@ func registerDIDRequest(did string, rubixNodePort string) (string, error) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /rbt/unpledge [post]
 func unpledgeRBTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -1702,6 +1735,7 @@ func unpledgeRBTRequest(data ReqToRubixNode, rubixNodePort string) (string, erro
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /create_ft [post]
 func createFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -1827,6 +1861,7 @@ func createFTReq(data CreateFTRequest, rubixNodePort string) (string, error) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /transfer_ft [post]
 func transferFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -1952,6 +1987,7 @@ func transferFTRequest(data TransferFTReq, rubixNodePort string) (string, error)
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /get_all_ft [get]
 func getAllFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -2064,6 +2100,7 @@ func getAllFTRequest(did string, rubixNodePort string) (map[string]interface{}, 
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /get_ft_chain [get]
 func getFTChainHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -2184,6 +2221,7 @@ func getFTChainRequest(tokenID string, rubixNodePort string) (map[string]interfa
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /create_nft [post]
 func createNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -2360,6 +2398,7 @@ func createNFTReq(data CreateNFTRequest, rubixNodePort string) (string, error) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /subscribe_nft [post]
 func subscribeNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -2487,6 +2526,7 @@ func subscribeNFTRequest(nft string, rubixNodePort string) (string, error) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /deploy_nft [post]
 func deployNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -2612,6 +2652,7 @@ func deployNFTRequest(data DeployNFTRequest, rubixNodePort string) (string, erro
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /execute_nft [post]
 func executeNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -2737,6 +2778,7 @@ func executeNFTRequest(data ExecuteNFTRequest, rubixNodePort string) (string, er
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /get_nft [get]
 func getNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -2856,6 +2898,7 @@ func getNFTRequest(nft string, rubixNodePort string) (map[string]interface{}, er
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /get_nft_chain [get]
 func getNFTChainHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
@@ -2977,6 +3020,7 @@ func getNFTChainRequest(nft string, latest string, rubixNodePort string) (map[st
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Security BearerAuth
+// @Param Authorization header string true "Authorization token (Bearer <your_token>)"
 // @Router /get_all_nft [get]
 func getAllNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")

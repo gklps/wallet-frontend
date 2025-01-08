@@ -39,6 +39,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.DIDPeerMap"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -139,6 +146,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.CreateFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -193,6 +207,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.CreateNFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -296,6 +317,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.DeployNFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -350,6 +378,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.ExecuteNFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -402,6 +437,13 @@
                         "name": "did",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -451,6 +493,13 @@
                         "description": "DID of the user",
                         "name": "did",
                         "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -502,6 +551,13 @@
                         "name": "tokenID",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -552,6 +608,13 @@
                         "name": "nft",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -601,6 +664,13 @@
                         "description": "NFT ID",
                         "name": "nft",
                         "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -691,6 +761,15 @@
                     "User"
                 ],
                 "summary": "Get user profile by DID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -734,6 +813,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.ReqToRubixNode"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -788,6 +874,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.ReqToRubixNode"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -839,6 +932,13 @@
                         "description": "DID of the user",
                         "name": "did",
                         "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -892,6 +992,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.TxnRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -944,6 +1051,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.ReqToRubixNode"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1049,6 +1163,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.SubscribeNFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1103,6 +1224,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.GenerateTestRBTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1157,6 +1285,13 @@
                         "schema": {
                             "$ref": "#/definitions/main.TransferFTReq"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1227,6 +1362,13 @@
                         "description": "End date for filtering transactions",
                         "name": "endDate",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {

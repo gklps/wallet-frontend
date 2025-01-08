@@ -45,6 +45,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.DIDPeerMap"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -145,6 +152,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.CreateFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -199,6 +213,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.CreateNFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -302,6 +323,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.DeployNFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -356,6 +384,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.ExecuteNFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -408,6 +443,13 @@ const docTemplate = `{
                         "name": "did",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -457,6 +499,13 @@ const docTemplate = `{
                         "description": "DID of the user",
                         "name": "did",
                         "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -508,6 +557,13 @@ const docTemplate = `{
                         "name": "tokenID",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -558,6 +614,13 @@ const docTemplate = `{
                         "name": "nft",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -607,6 +670,13 @@ const docTemplate = `{
                         "description": "NFT ID",
                         "name": "nft",
                         "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -697,6 +767,15 @@ const docTemplate = `{
                     "User"
                 ],
                 "summary": "Get user profile by DID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -740,6 +819,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.ReqToRubixNode"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -794,6 +880,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.ReqToRubixNode"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -845,6 +938,13 @@ const docTemplate = `{
                         "description": "DID of the user",
                         "name": "did",
                         "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     }
                 ],
@@ -898,6 +998,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.TxnRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -950,6 +1057,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.ReqToRubixNode"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1055,6 +1169,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.SubscribeNFTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1109,6 +1230,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.GenerateTestRBTRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1163,6 +1291,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/main.TransferFTReq"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1233,6 +1368,13 @@ const docTemplate = `{
                         "description": "End date for filtering transactions",
                         "name": "endDate",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization token (Bearer \u003cyour_token\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
