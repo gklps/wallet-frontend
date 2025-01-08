@@ -162,6 +162,17 @@ type ExecuteNFTRequest struct {
 	Comment    string  `json:"comment"`
 }
 
+// @title Wallet API Documentation
+// @version 1.0
+// @description API documentation for the Wallet application.
+// @contact.name API Support
+// @contact.email support@example.com
+// @host localhost:8080
+// @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
 func main() {
 	var err error
 	// Initialize SQLite3 database
@@ -501,7 +512,16 @@ func VerifyToken(tokenString string, publicKey *ecdsa.PublicKey) (bool, jwt.MapC
 	return false, nil, fmt.Errorf("invalid token")
 }
 
-// Handler: Create a new wallet and request DID from node
+// @Summary Create a new key pair
+// @Description Generates a key pair and assigns a DID
+// @Tags DID
+// @Accept json
+// @Produce json
+// @Param request body DIDRequest true "Port for DID request"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /create_wallet [post]
 func createWalletHandler(c *gin.Context) {
 	var req DIDRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -551,7 +571,17 @@ func createWalletHandler(c *gin.Context) {
 	c.Writer.Write([]byte("\n"))
 }
 
-// Handler: registerDIDHandler publishes the user's DID in the network
+// @Summary Register DID
+// @Description Publishes the user's DID in the network
+// @Tags DID
+// @Accept json
+// @Produce json
+// @Param request body ReqToRubixNode true "DID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /register_did [post]
 func registerDIDHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -619,7 +649,17 @@ func registerDIDHandler(c *gin.Context) {
 	c.Writer.Write([]byte("\n"))
 }
 
-// Handler: registerDIDHandler publishes the user's DID in the network
+// @Summary Setup Quorum
+// @Description sets up the DID to be a quorum and to pledge
+// @Tags DID
+// @Accept json
+// @Produce json
+// @Param request body ReqToRubixNode true "DID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /setup_quorum [post]
 func setupQuorumHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -738,7 +778,17 @@ func setupQuorumRequest(did string, rubixNodePort string) (string, error) {
 	return respMsg, nil
 }
 
-// Handler: registerDIDHandler publishes the user's DID in the network
+// @Summary Add peer to a DID quorum
+// @Description Adds a new peer to the quorum of a user's DID
+// @Tags DID
+// @Accept json
+// @Produce json
+// @Param request body DIDPeerMap true "Peer details"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /add_peer [post]
 func addPeerHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -853,7 +903,17 @@ func addPeerRequest(data DIDPeerMap, rubixNodePort string) (string, error) {
 	return respMsg, nil
 }
 
-// Handler: Sign transaction
+// @Summary Sign a transaction
+// @Description Signs a transaction for a user
+// @Tags Txn
+// @Accept json
+// @Produce json
+// @Param request body SignRequest true "Transaction signing request"
+// @Success 200 {object} SignResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /sign [post]
 func signTransactionHandler(c *gin.Context) {
 	var req SignRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -889,7 +949,17 @@ func signTransactionHandler(c *gin.Context) {
 	c.Writer.Write([]byte("\n"))
 }
 
-// Handler: Request transaction
+// @Summary Request a transaction
+// @Description Initiates a transaction between two DIDs
+// @Tags Txn
+// @Accept json
+// @Produce json
+// @Param request body TxnRequest true "Transaction details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /request_txn [post]
 func requestTransactionHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -965,7 +1035,17 @@ func requestTransactionHandler(c *gin.Context) {
 	c.Writer.Write([]byte("\n"))
 }
 
-// Handler: Request RBT balance
+// @Summary Get RBT balance
+// @Description Retrieves the RBT balance for a user
+// @Tags RBT
+// @Accept json
+// @Produce json
+// @Param did query string true "DID of the user"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /request_balance [get]
 func requestBalanceHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -1031,7 +1111,17 @@ func requestBalanceHandler(c *gin.Context) {
 	c.Writer.Write([]byte("\n"))
 }
 
-// Handler: Request to generate test RBTs
+// @Summary Create test RBT tokens
+// @Description Creates test RBT tokens for a user
+// @Tags RBT
+// @Accept json
+// @Produce json
+// @Param request body GenerateTestRBTRequest true "Request to generate test RBTs"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /testrbt/create [post]
 func createTestRBTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -1100,7 +1190,20 @@ func createTestRBTHandler(c *gin.Context) {
 	c.Writer.Write([]byte("\n"))
 }
 
-// Handler: Request to fetch Txns list by DID
+// @Summary Get transactions by DID
+// @Description Fetches all transactions involving the specified DID
+// @Tags Txn
+// @Accept json
+// @Produce json
+// @Param did query string true "DID of the user"
+// @Param role query string false "Role in the transaction (e.g., sender, receiver)"
+// @Param startDate query string false "Start date for filtering transactions"
+// @Param endDate query string false "End date for filtering transactions"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /txn/by_did [get]
 func getTxnByDIDHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -1461,7 +1564,17 @@ func registerDIDRequest(did string, rubixNodePort string) (string, error) {
 	return respMsg, nil
 }
 
-// Handler: Request to unpledge pledged RBTs
+// @Summary Unpledge RBT tokens
+// @Description Unpledges RBT tokens for a user
+// @Tags RBT
+// @Accept json
+// @Produce json
+// @Param request body ReqToRubixNode true "Request to unpledge RBTs"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /rbt/unpledge [post]
 func unpledgeRBTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -1579,7 +1692,17 @@ func unpledgeRBTRequest(data ReqToRubixNode, rubixNodePort string) (string, erro
 }
 
 // FT Handlers
-// createFTHandler: Request to create FT
+// @Summary Create fungible tokens
+// @Description Creates fungible tokens for a user
+// @Tags FT
+// @Accept json
+// @Produce json
+// @Param request body CreateFTRequest true "Fungible token creation details"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /create_ft [post]
 func createFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -1694,7 +1817,17 @@ func createFTReq(data CreateFTRequest, rubixNodePort string) (string, error) {
 	return respMsg, nil
 }
 
-// transferFTHandler: Request to transfer FTs
+// @Summary Transfer fungible tokens
+// @Description Transfers fungible tokens from one user to another
+// @Tags FT
+// @Accept json
+// @Produce json
+// @Param request body TransferFTReq true "Fungible token transfer details"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /transfer_ft [post]
 func transferFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -1809,7 +1942,17 @@ func transferFTRequest(data TransferFTReq, rubixNodePort string) (string, error)
 	return respMsg, nil
 }
 
-// getAllFTHandler: Request to provide all FTs' info
+// @Summary Get all fungible tokens
+// @Description Retrieves all fungible tokens for a user
+// @Tags FT
+// @Accept json
+// @Produce json
+// @Param did query string true "DID of the user"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /get_all_ft [get]
 func getAllFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -1911,7 +2054,17 @@ func getAllFTRequest(did string, rubixNodePort string) (map[string]interface{}, 
 	return response, nil
 }
 
-// getFTChainHandler: Request to fetch FT chain
+// @Summary Get fungible token chain
+// @Description Retrieves the chain of a specific fungible token
+// @Tags FT
+// @Accept json
+// @Produce json
+// @Param tokenID query string true "Token ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /get_ft_chain [get]
 func getFTChainHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -2020,7 +2173,18 @@ func getFTChainRequest(tokenID string, rubixNodePort string) (map[string]interfa
 }
 
 // NFT Handlers
-// createNFTHandler
+
+// @Summary Create a non-fungible token
+// @Description Creates a new NFT with metadata and artifact
+// @Tags NFT
+// @Accept json
+// @Produce json
+// @Param request body CreateNFTRequest true "NFT creation details"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /create_nft [post]
 func createNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -2186,7 +2350,17 @@ func createNFTReq(data CreateNFTRequest, rubixNodePort string) (string, error) {
 	return respMsg, nil
 }
 
-// subscribeNFTHandler: Request to subscribe NFT
+// @Summary Subscribe to an NFT
+// @Description Subscribes a user to an NFT
+// @Tags NFT
+// @Accept json
+// @Produce json
+// @Param request body SubscribeNFTRequest true "NFT subscription details"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /subscribe_nft [post]
 func subscribeNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -2303,7 +2477,17 @@ func subscribeNFTRequest(nft string, rubixNodePort string) (string, error) {
 	return respMsg, nil
 }
 
-// deployNFTHandler: Request to deploy NFT
+// @Summary Deploy an NFT
+// @Description Deploys an NFT to the blockchain
+// @Tags NFT
+// @Accept json
+// @Produce json
+// @Param request body DeployNFTRequest true "NFT deployment details"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /deploy_nft [post]
 func deployNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -2418,7 +2602,17 @@ func deployNFTRequest(data DeployNFTRequest, rubixNodePort string) (string, erro
 	return respMsg, nil
 }
 
-// executeNFTHandler: Request to execute NFT
+// @Summary Execute an NFT
+// @Description Executes an NFT transaction
+// @Tags NFT
+// @Accept json
+// @Produce json
+// @Param request body ExecuteNFTRequest true "NFT execution details"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /execute_nft [post]
 func executeNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -2533,7 +2727,17 @@ func executeNFTRequest(data ExecuteNFTRequest, rubixNodePort string) (string, er
 	return respMsg, nil
 }
 
-// getNFTHandler: Request to provide all NFT info
+// @Summary Get NFT details
+// @Description Retrieves details of a specific NFT
+// @Tags NFT
+// @Accept json
+// @Produce json
+// @Param nft query string true "NFT ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /get_nft [get]
 func getNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -2642,7 +2846,17 @@ func getNFTRequest(nft string, rubixNodePort string) (map[string]interface{}, er
 	return response, nil
 }
 
-// getNFTChainHandler: Request to fetch NFT chain
+// @Summary Get NFT chain
+// @Description Retrieves the chain of a specific NFT
+// @Tags NFT
+// @Accept json
+// @Produce json
+// @Param nft query string true "NFT ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /get_nft_chain [get]
 func getNFTChainHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {
@@ -2753,7 +2967,17 @@ func getNFTChainRequest(nft string, latest string, rubixNodePort string) (map[st
 	return response, nil
 }
 
-// getAllNFTHandler: Request to provide all NFTs' info
+// @Summary Get all NFTs
+// @Description Retrieves all NFTs for a user
+// @Tags NFT
+// @Accept json
+// @Produce json
+// @Param did query string true "DID of the user"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Security BearerAuth
+// @Router /get_all_nft [get]
 func getAllNFTHandler(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	if tokenString == "" {

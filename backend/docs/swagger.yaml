@@ -1,4 +1,25 @@
+basePath: /
 definitions:
+  main.CreateFTRequest:
+    properties:
+      did:
+        type: string
+      ft_count:
+        type: integer
+      ft_name:
+        type: string
+      token_count:
+        type: integer
+    type: object
+  main.CreateNFTRequest:
+    properties:
+      artifact:
+        type: string
+      did:
+        type: string
+      metadata:
+        type: string
+    type: object
   main.CreateUserRequest:
     properties:
       email:
@@ -8,10 +29,60 @@ definitions:
       password:
         type: string
     type: object
+  main.DIDPeerMap:
+    properties:
+      DID:
+        type: string
+      DIDType:
+        type: integer
+      PeerID:
+        type: string
+      self_did:
+        type: string
+    type: object
+  main.DIDRequest:
+    properties:
+      port:
+        type: integer
+    type: object
+  main.DeployNFTRequest:
+    properties:
+      did:
+        type: string
+      nft:
+        type: string
+      quorum_type:
+        type: integer
+    type: object
   main.ErrorResponse:
     properties:
       error:
         type: string
+    type: object
+  main.ExecuteNFTRequest:
+    properties:
+      comment:
+        type: string
+      nft:
+        type: string
+      nft_data:
+        type: string
+      nft_value:
+        type: number
+      owner:
+        type: string
+      quorum_type:
+        type: integer
+      receiver:
+        type: string
+    type: object
+  main.GenerateTestRBTRequest:
+    properties:
+      did:
+        description: RubixNodePort string `json:"port"`
+        type: string
+      number_of_tokens:
+        type: integer
     type: object
   main.LoginCredentials:
     properties:
@@ -20,13 +91,75 @@ definitions:
       password:
         type: string
     type: object
+  main.ReqToRubixNode:
+    properties:
+      did:
+        type: string
+      port:
+        type: string
+    type: object
+  main.SignRequest:
+    properties:
+      data:
+        type: string
+      did:
+        type: string
+    type: object
+  main.SignResponse:
+    properties:
+      did:
+        type: string
+      signature:
+        type: string
+      signed_data:
+        type: string
+    type: object
+  main.SubscribeNFTRequest:
+    properties:
+      did:
+        type: string
+      nft:
+        type: string
+    type: object
   main.TokenResponse:
     properties:
       token:
         type: string
     type: object
+  main.TransferFTReq:
+    properties:
+      comment:
+        type: string
+      creatorDID:
+        type: string
+      ft_count:
+        type: integer
+      ft_name:
+        type: string
+      password:
+        type: string
+      quorum_type:
+        type: integer
+      receiver:
+        type: string
+      sender:
+        type: string
+    type: object
+  main.TxnRequest:
+    properties:
+      did:
+        type: string
+      port:
+        type: string
+      rbt_amount:
+        type: number
+      receiver:
+        type: string
+    type: object
   main.User:
     properties:
+      did:
+        type: string
       email:
         type: string
       id:
@@ -34,9 +167,49 @@ definitions:
       name:
         type: string
     type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: support@example.com
+    name: API Support
+  description: API documentation for the Wallet application.
+  title: Wallet API Documentation
+  version: "1.0"
 paths:
+  /add_peer:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new peer to the quorum of a user's DID
+      parameters:
+      - description: Peer details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.DIDPeerMap'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add peer to a DID quorum
+      tags:
+      - DID
   /create:
     post:
       consumes:
@@ -67,6 +240,334 @@ paths:
       summary: Create a new user
       tags:
       - User
+  /create_ft:
+    post:
+      consumes:
+      - application/json
+      description: Creates fungible tokens for a user
+      parameters:
+      - description: Fungible token creation details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.CreateFTRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create fungible tokens
+      tags:
+      - FT
+  /create_nft:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new NFT with metadata and artifact
+      parameters:
+      - description: NFT creation details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.CreateNFTRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a non-fungible token
+      tags:
+      - NFT
+  /create_wallet:
+    post:
+      consumes:
+      - application/json
+      description: Generates a key pair and assigns a DID
+      parameters:
+      - description: Port for DID request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.DIDRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Create a new key pair
+      tags:
+      - DID
+  /deploy_nft:
+    post:
+      consumes:
+      - application/json
+      description: Deploys an NFT to the blockchain
+      parameters:
+      - description: NFT deployment details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.DeployNFTRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Deploy an NFT
+      tags:
+      - NFT
+  /execute_nft:
+    post:
+      consumes:
+      - application/json
+      description: Executes an NFT transaction
+      parameters:
+      - description: NFT execution details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.ExecuteNFTRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Execute an NFT
+      tags:
+      - NFT
+  /get_all_ft:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all fungible tokens for a user
+      parameters:
+      - description: DID of the user
+        in: query
+        name: did
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all fungible tokens
+      tags:
+      - FT
+  /get_all_nft:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all NFTs for a user
+      parameters:
+      - description: DID of the user
+        in: query
+        name: did
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all NFTs
+      tags:
+      - NFT
+  /get_ft_chain:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the chain of a specific fungible token
+      parameters:
+      - description: Token ID
+        in: query
+        name: tokenID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get fungible token chain
+      tags:
+      - FT
+  /get_nft:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves details of a specific NFT
+      parameters:
+      - description: NFT ID
+        in: query
+        name: nft
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get NFT details
+      tags:
+      - NFT
+  /get_nft_chain:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the chain of a specific NFT
+      parameters:
+      - description: NFT ID
+        in: query
+        name: nft
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get NFT chain
+      tags:
+      - NFT
   /login:
     post:
       consumes:
@@ -115,7 +616,357 @@ paths:
             $ref: '#/definitions/main.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Get user profile by ID
+      summary: Get user profile by DID
       tags:
       - User
+  /rbt/unpledge:
+    post:
+      consumes:
+      - application/json
+      description: Unpledges RBT tokens for a user
+      parameters:
+      - description: Request to unpledge RBTs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.ReqToRubixNode'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unpledge RBT tokens
+      tags:
+      - RBT
+  /register_did:
+    post:
+      consumes:
+      - application/json
+      description: Publishes the user's DID in the network
+      parameters:
+      - description: DID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.ReqToRubixNode'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Register DID
+      tags:
+      - DID
+  /request_balance:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the RBT balance for a user
+      parameters:
+      - description: DID of the user
+        in: query
+        name: did
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get RBT balance
+      tags:
+      - RBT
+  /request_txn:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a transaction between two DIDs
+      parameters:
+      - description: Transaction details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.TxnRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request a transaction
+      tags:
+      - Txn
+  /setup_quorum:
+    post:
+      consumes:
+      - application/json
+      description: sets up the DID to be a quorum and to pledge
+      parameters:
+      - description: DID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.ReqToRubixNode'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Setup Quorum
+      tags:
+      - DID
+  /sign:
+    post:
+      consumes:
+      - application/json
+      description: Signs a transaction for a user
+      parameters:
+      - description: Transaction signing request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.SignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.SignResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Sign a transaction
+      tags:
+      - Txn
+  /subscribe_nft:
+    post:
+      consumes:
+      - application/json
+      description: Subscribes a user to an NFT
+      parameters:
+      - description: NFT subscription details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.SubscribeNFTRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Subscribe to an NFT
+      tags:
+      - NFT
+  /testrbt/create:
+    post:
+      consumes:
+      - application/json
+      description: Creates test RBT tokens for a user
+      parameters:
+      - description: Request to generate test RBTs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.GenerateTestRBTRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create test RBT tokens
+      tags:
+      - RBT
+  /transfer_ft:
+    post:
+      consumes:
+      - application/json
+      description: Transfers fungible tokens from one user to another
+      parameters:
+      - description: Fungible token transfer details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.TransferFTReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Transfer fungible tokens
+      tags:
+      - FT
+  /txn/by_did:
+    get:
+      consumes:
+      - application/json
+      description: Fetches all transactions involving the specified DID
+      parameters:
+      - description: DID of the user
+        in: query
+        name: did
+        required: true
+        type: string
+      - description: Role in the transaction (e.g., sender, receiver)
+        in: query
+        name: role
+        type: string
+      - description: Start date for filtering transactions
+        in: query
+        name: startDate
+        type: string
+      - description: End date for filtering transactions
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get transactions by DID
+      tags:
+      - Txn
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
